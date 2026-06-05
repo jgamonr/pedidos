@@ -1,0 +1,1173 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Congreso Food Control</title>
+  <style>
+    :root {
+      --bg: #f6f7f4;
+      --panel: #ffffff;
+      --ink: #222722;
+      --muted: #667063;
+      --line: #dfe4dc;
+      --brand: #176b57;
+      --brand-2: #d94f30;
+      --ok: #2b8a3e;
+      --warn: #b46b00;
+      --danger: #b42318;
+      --accent: #2457a6;
+      --shadow: 0 14px 38px rgba(28, 38, 32, .10);
+      --radius: 8px;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Arial, sans-serif;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background:
+        linear-gradient(135deg, rgba(23,107,87,.08), transparent 34%),
+        linear-gradient(315deg, rgba(217,79,48,.08), transparent 38%),
+        var(--bg);
+      min-height: 100vh;
+    }
+    button, input, select { font: inherit; }
+    button {
+      border: 0;
+      border-radius: 7px;
+      background: var(--brand);
+      color: #fff;
+      padding: 10px 13px;
+      cursor: pointer;
+      font-weight: 750;
+      min-height: 40px;
+    }
+    button:hover { filter: brightness(.97); }
+    button:disabled { opacity: .45; cursor: not-allowed; }
+    .ghost { background: #eef2ed; color: var(--ink); }
+    .danger { background: var(--danger); }
+    .warn { background: var(--warn); }
+    .accent { background: var(--accent); }
+    .icon-btn {
+      width: 40px;
+      height: 40px;
+      padding: 0;
+      display: inline-grid;
+      place-items: center;
+      font-size: 20px;
+    }
+    input, select {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      background: #fff;
+      color: var(--ink);
+      padding: 10px 11px;
+      min-height: 40px;
+    }
+    label { display: grid; gap: 6px; color: var(--muted); font-size: 13px; font-weight: 700; }
+    .app { display: grid; grid-template-columns: 220px 1fr; min-height: 100vh; }
+    aside {
+      border-right: 1px solid var(--line);
+      background: rgba(255,255,255,.82);
+      backdrop-filter: blur(10px);
+      padding: 18px;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 900;
+      font-size: 17px;
+      margin-bottom: 20px;
+    }
+    .mark {
+      width: 34px;
+      height: 34px;
+      border-radius: 8px;
+      display: grid;
+      place-items: center;
+      color: #fff;
+      background: linear-gradient(135deg, var(--brand), var(--brand-2));
+      font-weight: 950;
+    }
+    nav { display: grid; gap: 8px; }
+    .nav-btn {
+      background: transparent;
+      color: var(--muted);
+      text-align: left;
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      justify-content: flex-start;
+      padding: 10px;
+    }
+    .nav-btn.active { background: #e8f1ed; color: var(--brand); }
+    .side-foot {
+      position: absolute;
+      left: 18px;
+      right: 18px;
+      bottom: 18px;
+      display: grid;
+      gap: 8px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+    main { padding: 24px; display: grid; align-content: start; gap: 18px; }
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+    h1 { margin: 0; font-size: clamp(24px, 3vw, 34px); letter-spacing: 0; }
+    h2 { margin: 0 0 12px; font-size: 18px; letter-spacing: 0; }
+    h3 { margin: 0; font-size: 15px; letter-spacing: 0; }
+    .sub { color: var(--muted); margin: 5px 0 0; }
+    .toolbar, .row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+    .pill {
+      border: 1px solid var(--line);
+      background: #fff;
+      border-radius: 999px;
+      padding: 7px 10px;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 800;
+    }
+    .grid { display: grid; gap: 14px; }
+    .products { grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); }
+    .product, .order, .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+    .product { overflow: hidden; display: grid; grid-template-rows: 120px 1fr; }
+    .product-art {
+      display: grid;
+      place-items: center;
+      font-size: 44px;
+      background: linear-gradient(135deg, rgba(23,107,87,.16), rgba(217,79,48,.12));
+      border-bottom: 1px solid var(--line);
+    }
+    .product-body, .order, .panel { padding: 14px; }
+    .price { font-size: 22px; font-weight: 950; }
+    .stock { color: var(--muted); font-size: 13px; font-weight: 800; }
+    .qty {
+      display: grid;
+      grid-template-columns: 40px 1fr 40px;
+      align-items: center;
+      gap: 8px;
+      margin-top: 12px;
+    }
+    .qty strong { text-align: center; }
+    .layout { display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: 16px; align-items: start; }
+    .cart {
+      position: sticky;
+      top: 20px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 16px;
+      display: grid;
+      gap: 12px;
+    }
+    .cart-line, .item-line {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 10px;
+      align-items: start;
+      padding: 8px 0;
+      border-bottom: 1px solid var(--line);
+    }
+    .cart-line:last-child, .item-line:last-child { border-bottom: 0; }
+    .total { display: flex; justify-content: space-between; font-size: 22px; font-weight: 950; }
+    .kanban { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+    .column { display: grid; gap: 12px; align-content: start; }
+    .column-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0 2px;
+    }
+    .order { display: grid; gap: 12px; border-left: 6px solid var(--accent); }
+    .order[data-status="recibido"] { border-left-color: var(--warn); background: #fff8e8; }
+    .order[data-status="cocina"] { border-left-color: var(--accent); background: #eef5ff; }
+    .order[data-status="preparacion"] { border-left-color: var(--brand); background: #eef8f3; }
+    .order[data-status="listo"] { border-left-color: var(--brand-2); }
+    .order[data-status="entregado"] { border-left-color: var(--ok); }
+    .order[data-status="cancelado"] { border-left-color: var(--danger); opacity: .78; }
+    .order-top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 8px;
+    }
+    .badge {
+      border-radius: 999px;
+      padding: 5px 8px;
+      font-size: 12px;
+      font-weight: 900;
+      background: #edf1f6;
+      color: var(--accent);
+      white-space: nowrap;
+    }
+    .admin-grid { display: grid; grid-template-columns: 340px 1fr; gap: 16px; align-items: start; }
+    .report-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; align-items: start; }
+    .metric-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 16px; }
+    .metric {
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 14px;
+      display: grid;
+      gap: 5px;
+    }
+    .metric span { color: var(--muted); font-size: 12px; font-weight: 900; text-transform: uppercase; }
+    .metric strong { font-size: 24px; }
+    table { width: 100%; border-collapse: collapse; background: #fff; border-radius: var(--radius); overflow: hidden; }
+    th, td { padding: 10px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: middle; }
+    th { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: 0; }
+    tr:last-child td { border-bottom: 0; }
+    .form-grid { display: grid; gap: 11px; }
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(11, 18, 16, .52);
+      display: none;
+      place-items: center;
+      padding: 16px;
+      z-index: 20;
+    }
+    .modal-backdrop.show { display: grid; }
+    .modal {
+      width: min(460px, 100%);
+      background: #fff;
+      border-radius: var(--radius);
+      box-shadow: 0 24px 70px rgba(0,0,0,.28);
+      padding: 18px;
+      display: grid;
+      gap: 12px;
+    }
+    .progress-modal {
+      width: min(360px, 100%);
+      background: #fff;
+      border-radius: var(--radius);
+      box-shadow: 0 24px 70px rgba(0,0,0,.28);
+      padding: 22px;
+      display: grid;
+      gap: 12px;
+      justify-items: center;
+      text-align: center;
+    }
+    .spinner {
+      width: 46px;
+      height: 46px;
+      border: 5px solid #e7ece5;
+      border-top-color: var(--brand);
+      border-radius: 50%;
+      animation: spin .78s linear infinite;
+    }
+    .progress-modal strong { font-size: 18px; }
+    .progress-modal span { color: var(--muted); font-size: 13px; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .toasts {
+      position: fixed;
+      right: 16px;
+      bottom: 16px;
+      display: grid;
+      gap: 10px;
+      z-index: 30;
+      width: min(380px, calc(100vw - 32px));
+    }
+    .toast {
+      background: #101915;
+      color: #fff;
+      padding: 12px 13px;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      display: grid;
+      gap: 3px;
+      animation: rise .18s ease-out;
+    }
+    .toast strong { font-size: 14px; }
+    .toast span { color: rgba(255,255,255,.72); font-size: 13px; }
+    @keyframes rise { from { transform: translateY(8px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+    .hidden { display: none !important; }
+    .empty { color: var(--muted); padding: 16px; border: 1px dashed var(--line); border-radius: var(--radius); background: rgba(255,255,255,.6); }
+    .settings {
+      display: none;
+      gap: 8px;
+      padding-top: 8px;
+      border-top: 1px solid var(--line);
+    }
+    .settings.show { display: grid; }
+    @media (max-width: 980px) {
+      .app { grid-template-columns: 1fr; }
+      aside {
+        height: auto;
+        position: static;
+        border-right: 0;
+        border-bottom: 1px solid var(--line);
+      }
+      nav { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+      .side-foot { position: static; margin-top: 12px; }
+      .layout, .admin-grid, .kanban, .report-grid { grid-template-columns: 1fr; }
+      .cart { position: static; }
+    }
+    @media (max-width: 620px) {
+      main { padding: 14px; }
+      aside { padding: 14px; }
+      nav { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .topbar { align-items: flex-start; flex-direction: column; }
+      th:nth-child(3), td:nth-child(3) { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside>
+      <div class="brand"><span class="mark">CF</span><span>Congreso Food</span></div>
+      <nav id="nav"></nav>
+      <div class="side-foot">
+        <button class="ghost" id="toggleSettings">Configuración</button>
+        <div class="settings" id="settings">
+          <label>URL Apps Script
+            <input id="apiUrl" placeholder="https://script.google.com/macros/s/.../exec">
+          </label>
+          <button id="saveApi" class="accent">Guardar y sincronizar</button>
+          <button id="testApi" class="ghost">Probar conexión</button>
+          <span id="syncStatus">Modo local activo</span>
+        </div>
+      </div>
+    </aside>
+    <main>
+      <div class="topbar">
+        <div>
+          <h1 id="viewTitle">Pedido de comida</h1>
+          <p class="sub" id="viewSub">Productos disponibles con descuento automático de stock.</p>
+        </div>
+        <div class="toolbar">
+          <span class="pill" id="clock"></span>
+          <span class="pill" id="orderTotals">Pedidos: 0</span>
+          <span class="pill" id="kitchenState">Cocina abierta</span>
+          <span class="pill" id="lastEvent">Sin eventos</span>
+          <button class="ghost" id="enableSound">Activar sonido</button>
+        </div>
+      </div>
+      <section id="content"></section>
+    </main>
+  </div>
+
+  <div class="modal-backdrop" id="payModal" aria-hidden="true">
+    <form class="modal" id="payForm">
+      <h2>Pago y entrega</h2>
+      <div id="paySummary"></div>
+      <label>Forma de pago
+        <select id="payMethod">
+          <option>Efectivo</option>
+          <option>Tarjeta</option>
+          <option>Transferencia</option>
+        </select>
+      </label>
+      <label>Cantidad recibida
+        <input id="amountReceived" type="number" min="0" step="0.01">
+      </label>
+      <div class="total"><span>Cambio</span><span id="changeDue">$0.00</span></div>
+      <div class="row">
+        <button type="submit" class="accent">Confirmar entrega</button>
+        <button type="button" class="ghost" id="closePay">Cancelar</button>
+      </div>
+    </form>
+  </div>
+  <div class="modal-backdrop" id="progressModal" aria-hidden="true">
+    <div class="progress-modal" role="status" aria-live="polite">
+      <div class="spinner"></div>
+      <strong id="progressTitle">Procesando cambio</strong>
+      <span id="progressText">Registrando datos en Google Sheets...</span>
+    </div>
+  </div>
+  <div class="toasts" id="toasts"></div>
+
+  <script>
+    const STORE_KEY = "congreso-food-v1";
+    const API_KEY = "congreso-food-api-url";
+    const DEFAULT_API_URL = "https://script.google.com/macros/s/AKfycby7si9hqvx14rSYG_ER8UUHmDJf4NTIVT7qVAvXtVSWHysVgecKxJvpTcXFjiXXIJrrIQ/exec";
+    const VISUAL_TOASTS = false;
+    const STATUS_FLOW = ["recibido", "cocina", "preparacion", "listo", "entregado"];
+    const icons = {
+      usuario: "🧾", recepcion: "☑", cocina: "◴", entrega: "▣", reportes: "Σ", admin: "⚙"
+    };
+    const views = [
+      ["usuario", "Usuario", "Pedido de comida", "Productos disponibles con descuento automático de stock."],
+      ["recepcion", "Recepción", "Recepción", "Recibe pedidos y envíalos a cocina."],
+      ["cocina", "Cocina", "Cocina", "Pedidos agrupados por estado del proceso."],
+      ["entrega", "Entrega", "Entrega", "Registra pago, cambio y entrega final."],
+      ["reportes", "Reportes", "Reportes", "Totales recibidos por pago y acumulados por producto."],
+      ["admin", "Administración", "Administración", "Alta, edición y eliminación de productos."]
+    ];
+    const sampleProducts = [
+      { id: crypto.randomUUID(), name: "Torta de pierna", price: 95, stock: 18, emoji: "🥪", active: true },
+      { id: crypto.randomUUID(), name: "Bowl vegetariano", price: 115, stock: 14, emoji: "🥗", active: true },
+      { id: crypto.randomUUID(), name: "Café americano", price: 45, stock: 40, emoji: "☕", active: true },
+      { id: crypto.randomUUID(), name: "Agua natural", price: 25, stock: 60, emoji: "💧", active: true },
+      { id: crypto.randomUUID(), name: "Galleta artesanal", price: 35, stock: 24, emoji: "🍪", active: true }
+    ];
+    let state = normalizeState(loadState());
+    let cart = {};
+    let activeView = "usuario";
+    let payOrderId = null;
+    let audioReady = false;
+    const channel = "BroadcastChannel" in window ? new BroadcastChannel("congreso-food-events") : null;
+
+    function loadState() {
+      const saved = localStorage.getItem(STORE_KEY);
+      if (saved) return JSON.parse(saved);
+      return { products: sampleProducts, orders: [], config: defaultConfig(), updatedAt: Date.now() };
+    }
+    function defaultConfig() {
+      return {
+        kitchenOpen: true,
+        slotMinutes: 15,
+        deliveryWindows: [
+          { start: "09:00", end: "12:00" },
+          { start: "14:00", end: "18:00" }
+        ]
+      };
+    }
+    function normalizeState(data) {
+      const next = data || {};
+      next.products = Array.isArray(next.products) ? next.products : sampleProducts;
+      next.orders = Array.isArray(next.orders) ? next.orders : [];
+      next.config = { ...defaultConfig(), ...(next.config || {}) };
+      if (!Array.isArray(next.config.deliveryWindows) || !next.config.deliveryWindows.length) {
+        next.config.deliveryWindows = defaultConfig().deliveryWindows;
+      }
+      next.orders.forEach(order => {
+        order.history = Array.isArray(order.history) && order.history.length ? order.history : [{ status: order.status || "recibido", at: order.createdAt || Date.now() }];
+      });
+      return next;
+    }
+    function saveState(announce = true) {
+      state.updatedAt = Date.now();
+      localStorage.setItem(STORE_KEY, JSON.stringify(state));
+      if (announce) emit("sync", "Datos actualizados", "Los módulos recibieron el cambio.", "soft");
+      renderIndicators();
+    }
+    function money(value) {
+      return new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN" }).format(Number(value || 0));
+    }
+    function nowTime() {
+      return new Intl.DateTimeFormat("es-MX", { hour: "2-digit", minute: "2-digit" }).format(new Date());
+    }
+    function orderTotal(order) {
+      return order.items.reduce((sum, item) => sum + item.price * item.qty, 0);
+    }
+    function getApiUrl() {
+      return localStorage.getItem(API_KEY) || DEFAULT_API_URL;
+    }
+    function emit(type, title, body, sound = "soft") {
+      const event = { type, title, body, sound, at: Date.now() };
+      notify(event);
+      if (channel) channel.postMessage(event);
+      localStorage.setItem("congreso-food-last-event", JSON.stringify(event));
+    }
+    function notify(event) {
+      document.getElementById("lastEvent").textContent = `${event.title}: ${event.body}`;
+      if (!VISUAL_TOASTS) {
+        playSound(event.sound);
+        return;
+      }
+      const toast = document.createElement("div");
+      toast.className = "toast";
+      toast.innerHTML = `<strong>${event.title}</strong><span>${event.body}</span>`;
+      document.getElementById("toasts").appendChild(toast);
+      setTimeout(() => toast.remove(), 4200);
+      playSound(event.sound);
+    }
+    function setProgress(show, title = "Procesando cambio", text = "Registrando datos en Google Sheets...") {
+      const modal = document.getElementById("progressModal");
+      document.getElementById("progressTitle").textContent = title;
+      document.getElementById("progressText").textContent = text;
+      modal.classList.toggle("show", show);
+      modal.setAttribute("aria-hidden", show ? "false" : "true");
+    }
+    function playSound(kind) {
+      if (!audioReady) return;
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      const patterns = {
+        new: [523, 659, 784],
+        kitchen: [392, 523],
+        ready: [784, 880, 988],
+        paid: [659, 523, 659],
+        soft: [440]
+      };
+      (patterns[kind] || patterns.soft).forEach((freq, index) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.frequency.value = freq;
+        osc.type = "sine";
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        const start = ctx.currentTime + index * .12;
+        gain.gain.setValueAtTime(.0001, start);
+        gain.gain.exponentialRampToValueAtTime(.12, start + .02);
+        gain.gain.exponentialRampToValueAtTime(.0001, start + .12);
+        osc.start(start);
+        osc.stop(start + .14);
+      });
+    }
+    function setView(view) {
+      activeView = view;
+      const config = views.find(v => v[0] === view);
+      document.getElementById("viewTitle").textContent = config[2];
+      document.getElementById("viewSub").textContent = config[3];
+      renderNav();
+      render();
+      if (["recepcion", "cocina", "entrega", "reportes"].includes(view)) loadRemote(true);
+    }
+    function renderNav() {
+      document.getElementById("nav").innerHTML = views.map(([id, label]) =>
+        `<button class="nav-btn ${activeView === id ? "active" : ""}" data-view="${id}"><span>${icons[id]}</span>${label}</button>`
+      ).join("");
+    }
+    function renderIndicators() {
+      const counts = state.orders.reduce((acc, order) => {
+        acc[order.status] = (acc[order.status] || 0) + 1;
+        return acc;
+      }, {});
+      document.getElementById("orderTotals").textContent =
+        `No atendidos: ${counts.recibido || 0} · Por iniciar: ${counts.cocina || 0} · Preparación: ${counts.preparacion || 0} · Listos: ${counts.listo || 0}`;
+      document.getElementById("kitchenState").textContent = state.config.kitchenOpen ? "Cocina abierta" : "Cocina cerrada";
+    }
+    function availableProducts() {
+      if (!state.config.kitchenOpen) return [];
+      return state.products.filter(p => p.active !== false && Number(p.stock) > 0);
+    }
+    function deliverySlots() {
+      const slots = [];
+      const minutes = Math.max(5, Number(state.config.slotMinutes || 15));
+      for (const window of state.config.deliveryWindows) {
+        const [startHour, startMinute] = window.start.split(":").map(Number);
+        const [endHour, endMinute] = window.end.split(":").map(Number);
+        let current = startHour * 60 + startMinute;
+        const end = endHour * 60 + endMinute;
+        while (current <= end) {
+          slots.push(`${String(Math.floor(current / 60)).padStart(2, "0")}:${String(current % 60).padStart(2, "0")}`);
+          current += minutes;
+        }
+      }
+      return [...new Set(slots)].sort();
+    }
+    function deliveryWindowsText() {
+      return state.config.deliveryWindows.map(slot => `${slot.start}-${slot.end}`).join("\n");
+    }
+    function parseDeliveryWindows(value) {
+      return value.split(/\n|,/).map(line => line.trim()).filter(Boolean).map(line => {
+        const [start, end] = line.split("-").map(part => part.trim());
+        return /^\d{2}:\d{2}$/.test(start) && /^\d{2}:\d{2}$/.test(end) ? { start, end } : null;
+      }).filter(Boolean);
+    }
+    function render() {
+      const renderers = { usuario: renderUser, recepcion: renderReception, cocina: renderKitchen, entrega: renderDelivery, reportes: renderReports, admin: renderAdmin };
+      renderers[activeView]();
+    }
+    function renderUser() {
+      const items = availableProducts();
+      const slots = deliverySlots();
+      const lines = Object.entries(cart).filter(([, qty]) => qty > 0).map(([id, qty]) => {
+        const product = state.products.find(p => p.id === id);
+        return product ? { ...product, qty } : null;
+      }).filter(Boolean);
+      const total = lines.reduce((sum, p) => sum + p.price * p.qty, 0);
+      document.getElementById("content").innerHTML = `
+        <div class="layout">
+          <div class="grid products">
+            ${items.map(product => `
+              <article class="product">
+                <div class="product-art">${product.emoji || "🍽"}</div>
+                <div class="product-body">
+                  <div class="row" style="justify-content:space-between">
+                    <h3>${product.name}</h3>
+                    <span class="price">${money(product.price)}</span>
+                  </div>
+                  <div class="stock">${product.stock} disponibles</div>
+                  <div class="qty">
+                    <button class="icon-btn ghost" data-dec="${product.id}" title="Quitar">−</button>
+                    <strong>${cart[product.id] || 0}</strong>
+                    <button class="icon-btn" data-inc="${product.id}" title="Agregar" ${(cart[product.id] || 0) >= product.stock ? "disabled" : ""}>+</button>
+                  </div>
+                </div>
+              </article>
+            `).join("") || `<div class="empty">No hay productos disponibles en stock.</div>`}
+          </div>
+          <form class="cart" id="orderForm">
+            <h2>Pedido</h2>
+            ${state.config.kitchenOpen ? "" : `<div class="empty">La cocina está cerrada. Puedes consultar el menú cuando administración la abra.</div>`}
+            <label>Nombre
+              <input id="customerName" required autocomplete="name">
+            </label>
+            <label>Teléfono
+              <input id="customerPhone" required inputmode="tel" autocomplete="tel">
+            </label>
+            <label>Hora de entrega
+              <select id="pickupTime" required ${slots.length ? "" : "disabled"}>
+                ${slots.map(slot => `<option value="${slot}" ${slot === suggestTime(slots) ? "selected" : ""}>${slot}</option>`).join("")}
+              </select>
+            </label>
+            <div>
+              ${lines.map(item => `
+                <div class="cart-line"><span>${item.qty} × ${item.name}</span><strong>${money(item.qty * item.price)}</strong></div>
+              `).join("") || `<div class="empty">Agrega productos al pedido.</div>`}
+            </div>
+            <div class="total"><span>Total</span><span>${money(total)}</span></div>
+            <button ${lines.length && state.config.kitchenOpen && slots.length ? "" : "disabled"}>Enviar pedido</button>
+          </form>
+        </div>`;
+    }
+    function suggestTime(slots = deliverySlots()) {
+      const d = new Date(Date.now() + 20 * 60000);
+      const nowSlot = `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+      return slots.find(slot => slot >= nowSlot) || slots[0] || "";
+    }
+    function renderReception() {
+      const orders = state.orders.filter(o => o.status === "recibido");
+      document.getElementById("content").innerHTML = `
+        <div class="grid">
+          ${orders.map(orderCard).join("") || `<div class="empty">Sin pedidos por recibir.</div>`}
+        </div>`;
+    }
+    function renderKitchen() {
+      const processGroups = [
+        ["cocina", "Por iniciar"],
+        ["preparacion", "En preparación"],
+        ["listo", "Listos para entrega"]
+      ];
+      const orders = state.orders.filter(o => processGroups.some(([status]) => status === o.status)).sort((a, b) => a.pickupTime.localeCompare(b.pickupTime));
+      document.getElementById("content").innerHTML = orders.length ? `
+        <div class="kanban">
+          ${processGroups.map(([status, label]) => {
+            const groupOrders = orders.filter(order => order.status === status);
+            return `
+            <div class="column">
+              <div class="column-head"><h2>${label}</h2><span class="badge">${groupOrders.length}</span></div>
+              ${groupOrders.map(orderCard).join("") || `<div class="empty">Sin pedidos.</div>`}
+            </div>`;
+          }).join("")}
+        </div>` : `<div class="empty">Sin pedidos en cocina.</div>`;
+    }
+    function renderDelivery() {
+      const orders = state.orders.filter(o => ["listo", "entregado", "cancelado"].includes(o.status)).sort((a, b) => b.createdAt - a.createdAt);
+      document.getElementById("content").innerHTML = `
+        <div class="grid">
+          ${orders.map(orderCard).join("") || `<div class="empty">No hay pedidos listos para entrega.</div>`}
+        </div>`;
+    }
+    function renderReports() {
+      const delivered = state.orders.filter(order => order.status === "entregado");
+      const paidOrders = delivered.filter(order => order.payment);
+      const byPayment = paidOrders.reduce((acc, order) => {
+        const method = order.payment?.method || "Sin forma";
+        if (!acc[method]) acc[method] = { method, orders: 0, total: 0, received: 0, change: 0 };
+        acc[method].orders += 1;
+        acc[method].total += orderTotal(order);
+        acc[method].received += Number(order.payment?.received || orderTotal(order));
+        acc[method].change += Number(order.payment?.change || 0);
+        return acc;
+      }, {});
+      const byProduct = delivered.reduce((acc, order) => {
+        order.items.forEach(item => {
+          if (!acc[item.id]) acc[item.id] = { name: item.name, qty: 0, total: 0 };
+          acc[item.id].qty += Number(item.qty || 0);
+          acc[item.id].total += Number(item.qty || 0) * Number(item.price || 0);
+        });
+        return acc;
+      }, {});
+      const paymentRows = Object.values(byPayment).sort((a, b) => b.total - a.total);
+      const productRows = Object.values(byProduct).sort((a, b) => b.qty - a.qty);
+      const grossTotal = paidOrders.reduce((sum, order) => sum + orderTotal(order), 0);
+      const receivedTotal = paidOrders.reduce((sum, order) => sum + Number(order.payment?.received || orderTotal(order)), 0);
+      const changeTotal = paidOrders.reduce((sum, order) => sum + Number(order.payment?.change || 0), 0);
+      const productQty = productRows.reduce((sum, item) => sum + item.qty, 0);
+      document.getElementById("content").innerHTML = `
+        <div class="metric-grid">
+          <div class="metric"><span>Pedidos pagados</span><strong>${paidOrders.length}</strong></div>
+          <div class="metric"><span>Total venta</span><strong>${money(grossTotal)}</strong></div>
+          <div class="metric"><span>Recibido</span><strong>${money(receivedTotal)}</strong></div>
+          <div class="metric"><span>Cambio</span><strong>${money(changeTotal)}</strong></div>
+          <div class="metric"><span>Productos vendidos</span><strong>${productQty}</strong></div>
+        </div>
+        <div class="report-grid">
+          <div class="panel">
+            <h2>Totales por tipo de pago</h2>
+            <table>
+              <thead><tr><th>Pago</th><th>Pedidos</th><th>Total</th><th>Recibido</th></tr></thead>
+              <tbody>
+                ${paymentRows.map(row => `
+                  <tr><td>${row.method}</td><td>${row.orders}</td><td>${money(row.total)}</td><td>${money(row.received)}</td></tr>
+                `).join("") || `<tr><td colspan="4">Sin pagos registrados.</td></tr>`}
+              </tbody>
+            </table>
+          </div>
+          <div class="panel">
+            <h2>Acumulados por producto</h2>
+            <table>
+              <thead><tr><th>Producto</th><th>Cantidad</th><th>Total</th></tr></thead>
+              <tbody>
+                ${productRows.map(row => `
+                  <tr><td>${row.name}</td><td>${row.qty}</td><td>${money(row.total)}</td></tr>
+                `).join("") || `<tr><td colspan="3">Sin productos entregados.</td></tr>`}
+              </tbody>
+            </table>
+          </div>
+        </div>`;
+    }
+    function orderCard(order) {
+      const statusLabels = { recibido: "No atendido", cocina: "Por iniciar", preparacion: "En preparación", listo: "Listo", entregado: "Entregado", cancelado: "Cancelado" };
+      const previous = previousStatus(order);
+      const actions = {
+        recibido: `<button data-status="${order.id}:cocina" class="accent">Enviar a cocina</button>`,
+        cocina: `<button data-status="${order.id}:preparacion" class="accent">Iniciar preparación</button>`,
+        preparacion: `<button data-status="${order.id}:listo">Marcar listo</button>`,
+        listo: `<button data-pay="${order.id}" class="warn">Entregar</button>`,
+        entregado: `<span class="badge">Pagado: ${order.payment?.method || "N/D"}</span>`,
+        cancelado: `<span class="badge">Cancelado</span>`
+      };
+      const canCancel = !["entregado", "cancelado"].includes(order.status);
+      const canBack = previous && !["cancelado"].includes(order.status);
+      return `
+        <article class="order" data-status="${order.status}">
+          <div class="order-top">
+            <div>
+              <h3>${order.customerName}</h3>
+              <div class="sub">${order.customerPhone} · entrega ${order.pickupTime}</div>
+            </div>
+            <span class="badge">${statusLabels[order.status]}</span>
+          </div>
+          <div>
+            ${order.items.map(item => `<div class="item-line"><span>${item.qty} × ${item.name}</span><strong>${money(item.price * item.qty)}</strong></div>`).join("")}
+          </div>
+          <div class="row" style="justify-content:space-between">
+            <strong>${money(orderTotal(order))}</strong>
+            <div class="row">
+              ${canBack ? `<button class="ghost" data-back="${order.id}">Regresar</button>` : ""}
+              ${canCancel ? `<button class="danger" data-cancel="${order.id}">Cancelar</button>` : ""}
+              ${actions[order.status] || ""}
+            </div>
+          </div>
+        </article>`;
+    }
+    function previousStatus(order) {
+      const currentIndex = STATUS_FLOW.indexOf(order.status);
+      if (currentIndex > 0) return STATUS_FLOW[currentIndex - 1];
+      return "";
+    }
+    function renderAdmin() {
+      document.getElementById("content").innerHTML = `
+        <div class="admin-grid">
+          <div class="grid">
+            <form class="panel form-grid" id="productForm">
+              <h2 id="productFormTitle">Alta de producto</h2>
+              <input type="hidden" id="productId">
+              <label>Nombre<input id="productName" required></label>
+              <label>Precio<input id="productPrice" type="number" min="0" step="0.01" required></label>
+              <label>Stock<input id="productStock" type="number" min="0" step="1" required></label>
+              <label>Icono visual<input id="productEmoji" maxlength="3" placeholder="🍽"></label>
+              <label>Estado
+                <select id="productActive">
+                  <option value="true">Activo</option>
+                  <option value="false">Oculto</option>
+                </select>
+              </label>
+              <div class="row">
+                <button>Guardar</button>
+                <button type="button" class="ghost" id="clearProduct">Limpiar</button>
+              </div>
+            </form>
+            <form class="panel form-grid" id="configForm">
+              <h2>Operacion</h2>
+              <label>Cocina
+                <select id="kitchenOpen">
+                  <option value="true" ${state.config.kitchenOpen ? "selected" : ""}>Abierta</option>
+                  <option value="false" ${state.config.kitchenOpen ? "" : "selected"}>Cerrada</option>
+                </select>
+              </label>
+              <label>Intervalo de horarios
+                <input id="slotMinutes" type="number" min="5" step="5" value="${state.config.slotMinutes}">
+              </label>
+              <label>Rangos de entrega
+                <textarea id="deliveryWindows" rows="4" style="resize:vertical;border:1px solid var(--line);border-radius:7px;padding:10px">${deliveryWindowsText()}</textarea>
+              </label>
+              <button class="accent">Guardar operacion</button>
+            </form>
+          </div>
+          <div class="panel">
+            <h2>Productos</h2>
+            <table>
+              <thead><tr><th>Producto</th><th>Precio</th><th>Stock</th><th></th></tr></thead>
+              <tbody>
+                ${state.products.map(p => `
+                  <tr>
+                    <td>${p.emoji || "🍽"} ${p.name}</td>
+                    <td>${money(p.price)}</td>
+                    <td>${p.stock}</td>
+                    <td class="row" style="justify-content:flex-end">
+                      <button class="icon-btn ghost" title="Editar" data-edit="${p.id}">✎</button>
+                      <button class="icon-btn danger" title="Eliminar" data-delete="${p.id}">×</button>
+                    </td>
+                  </tr>
+                `).join("")}
+              </tbody>
+            </table>
+          </div>
+        </div>`;
+    }
+    async function createOrder(form) {
+      if (!state.config.kitchenOpen) {
+        emit("order", "Cocina cerrada", "No se pueden capturar pedidos nuevos.", "soft");
+        return;
+      }
+      const lines = Object.entries(cart).filter(([, qty]) => qty > 0).map(([id, qty]) => {
+        const product = state.products.find(p => p.id === id);
+        if (!product || product.stock < qty) return null;
+        return { id, name: product.name, price: Number(product.price), qty };
+      }).filter(Boolean);
+      if (!lines.length) return;
+      const order = {
+        id: crypto.randomUUID(),
+        customerName: form.customerName.value.trim(),
+        customerPhone: form.customerPhone.value.trim(),
+        pickupTime: form.pickupTime.value,
+        items: lines,
+        status: "recibido",
+        createdAt: Date.now(),
+        history: [{ status: "recibido", at: Date.now() }]
+      };
+      const saved = await syncRemote("createOrder", order);
+      if (!saved) return;
+      for (const line of lines) {
+        const product = state.products.find(p => p.id === line.id);
+        product.stock -= line.qty;
+      }
+      state.orders.unshift(order);
+      cart = {};
+      saveState(false);
+      emit("order", "Nuevo pedido recibido", `${order.customerName} · ${money(orderTotal(order))}`, "new");
+      render();
+    }
+    async function updateStatus(id, status) {
+      const order = state.orders.find(o => o.id === id);
+      if (!order) return;
+      const oldStatus = order.status;
+      const oldPayment = order.payment ? { ...order.payment } : null;
+      order.status = status;
+      order.history.push({ status, at: Date.now() });
+      const saved = await syncRemote("updateOrder", order);
+      if (!saved) {
+        order.status = oldStatus;
+        if (oldPayment) order.payment = oldPayment; else delete order.payment;
+        order.history.pop();
+        render();
+        return false;
+      }
+      saveState(false);
+      const sounds = { cocina: "kitchen", listo: "ready", entregado: "paid" };
+      emit("status", "Pedido actualizado", `${order.customerName}: ${status}`, sounds[status] || "soft");
+      render();
+      return true;
+    }
+    function backOrder(id) {
+      const order = state.orders.find(o => o.id === id);
+      if (!order) return;
+      const previous = previousStatus(order);
+      if (!previous) return;
+      updateStatus(id, previous);
+    }
+    async function cancelOrder(id) {
+      const order = state.orders.find(o => o.id === id);
+      if (!order || ["entregado", "cancelado"].includes(order.status)) return;
+      const oldStatus = order.status;
+      order.status = "cancelado";
+      order.history.push({ status: "cancelado", at: Date.now() });
+      const saved = await syncRemote("updateOrder", order);
+      if (!saved) {
+        order.status = oldStatus;
+        order.history.pop();
+        render();
+        return;
+      }
+      order.items.forEach(item => {
+        const product = state.products.find(p => p.id === item.id);
+        if (product) product.stock += item.qty;
+      });
+      saveState(false);
+      emit("status", "Pedido cancelado", order.customerName, "soft");
+      render();
+    }
+    function openPay(id) {
+      const order = state.orders.find(o => o.id === id);
+      if (!order) return;
+      payOrderId = id;
+      document.getElementById("paySummary").innerHTML = `<div class="total"><span>Total</span><span>${money(orderTotal(order))}</span></div>`;
+      document.getElementById("amountReceived").value = orderTotal(order).toFixed(2);
+      document.getElementById("payModal").classList.add("show");
+      calcChange();
+      setTimeout(() => {
+        const input = document.getElementById("amountReceived");
+        input.focus();
+        input.select();
+      }, 50);
+    }
+    function calcChange() {
+      const order = state.orders.find(o => o.id === payOrderId);
+      const total = order ? orderTotal(order) : 0;
+      const received = Number(document.getElementById("amountReceived").value || 0);
+      document.getElementById("changeDue").textContent = money(Math.max(0, received - total));
+    }
+    async function syncRemote(action, payload) {
+      const url = getApiUrl();
+      if (!url) return;
+      const labels = {
+        createOrder: "Registrando pedido",
+        updateOrder: "Actualizando pedido",
+        products: "Guardando productos",
+        config: "Guardando operación"
+      };
+      setProgress(true, labels[action] || "Procesando cambio", "Registrando datos en Google Sheets...");
+      try {
+        await submitHiddenForm(url, { action, payload: JSON.stringify(payload) });
+        document.getElementById("syncStatus").textContent = "Enviado a Sheets";
+        return true;
+      } catch (error) {
+        document.getElementById("syncStatus").textContent = `Error Sheets: ${error.message}`;
+        emit("sync", "Error al guardar", error.message, "soft");
+        return false;
+      } finally {
+        setProgress(false);
+      }
+    }
+    function submitHiddenForm(url, fields) {
+      return new Promise((resolve, reject) => {
+        const timeout = setTimeout(() => reject(new Error("Google Sheets tardó demasiado en responder")), 15000);
+        fetch(url, {
+          method: "POST",
+          mode: "no-cors",
+          headers: { "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8" },
+          body: new URLSearchParams(fields)
+        }).then(() => {
+          clearTimeout(timeout);
+          resolve(true);
+        }).catch(error => {
+          clearTimeout(timeout);
+          reject(error);
+        });
+      });
+    }
+    function callJsonp(url, params) {
+      return new Promise((resolve, reject) => {
+        const callback = `congresoFood${Date.now()}${Math.floor(Math.random() * 1000)}`;
+        const script = document.createElement("script");
+        const separator = url.includes("?") ? "&" : "?";
+        const query = new URLSearchParams({ ...params, callback });
+        const timeout = setTimeout(() => {
+          delete window[callback];
+          script.remove();
+          reject(new Error("Google Sheets no respondió"));
+        }, 12000);
+        window[callback] = data => {
+          clearTimeout(timeout);
+          delete window[callback];
+          script.remove();
+          resolve(data);
+        };
+        script.onerror = () => {
+          clearTimeout(timeout);
+          delete window[callback];
+          script.remove();
+          reject(new Error("No se pudo leer Sheets"));
+        };
+        script.src = `${url}${separator}${query.toString()}`;
+        document.body.appendChild(script);
+      });
+    }
+    async function loadRemote(silent = false) {
+      const url = getApiUrl();
+      document.getElementById("apiUrl").value = url;
+      if (!url) return;
+      try {
+        const knownIds = new Set(state.orders.map(order => order.id));
+        const data = await callJsonp(url, { action: "bootstrap" });
+        if (Array.isArray(data.products) && data.products.length) state.products = data.products;
+        if (Array.isArray(data.orders)) state.orders = data.orders;
+        if (data.config) state.config = { ...defaultConfig(), ...data.config };
+        state = normalizeState(state);
+        saveState(false);
+        const newOrders = state.orders.filter(order => !knownIds.has(order.id) && order.status === "recibido");
+        document.getElementById("syncStatus").textContent = silent ? `Sincronizado ${nowTime()}` : "Conectado a Google Sheets";
+        if (!silent) emit("sync", "Sincronización completa", "Productos y pedidos cargados desde Sheets.", "soft");
+        if (silent && newOrders.length) emit("order", "Pedido nuevo no atendido", `${newOrders.length} pedido(s) entraron a recepción.`, "new");
+        render();
+      } catch {
+        if (!silent) document.getElementById("syncStatus").textContent = "Modo local: revisa la URL";
+      }
+    }
+    document.addEventListener("click", async event => {
+      const target = event.target.closest("button");
+      if (!target) return;
+      if (target.dataset.view) setView(target.dataset.view);
+      if (target.dataset.inc) {
+        const product = state.products.find(p => p.id === target.dataset.inc);
+        cart[product.id] = Math.min(product.stock, (cart[product.id] || 0) + 1);
+        render();
+      }
+      if (target.dataset.dec) {
+        cart[target.dataset.dec] = Math.max(0, (cart[target.dataset.dec] || 0) - 1);
+        render();
+      }
+      if (target.dataset.status) {
+        const [id, status] = target.dataset.status.split(":");
+        updateStatus(id, status);
+      }
+      if (target.dataset.back) backOrder(target.dataset.back);
+      if (target.dataset.cancel) {
+        if (confirm("Cancelar este pedido y devolver el stock?")) cancelOrder(target.dataset.cancel);
+      }
+      if (target.dataset.pay) openPay(target.dataset.pay);
+      if (target.dataset.edit) {
+        const p = state.products.find(product => product.id === target.dataset.edit);
+        productId.value = p.id; productName.value = p.name; productPrice.value = p.price;
+        productStock.value = p.stock; productEmoji.value = p.emoji || ""; productActive.value = String(p.active !== false);
+        productFormTitle.textContent = "Editar producto";
+      }
+      if (target.dataset.delete) {
+        const p = state.products.find(product => product.id === target.dataset.delete);
+        if (confirm(`Eliminar ${p.name}?`)) {
+          const previousProducts = state.products.map(item => ({ ...item }));
+          state.products = state.products.filter(product => product.id !== p.id);
+          const saved = await syncRemote("products", state.products);
+          if (!saved) {
+            state.products = previousProducts;
+            render();
+            return;
+          }
+          saveState(false);
+          emit("product", "Producto eliminado", p.name, "soft");
+          render();
+        }
+      }
+      if (target.id === "clearProduct") {
+        productForm.reset();
+        productId.value = "";
+        productFormTitle.textContent = "Alta de producto";
+      }
+    });
+    document.addEventListener("submit", async event => {
+      event.preventDefault();
+      if (event.target.id === "orderForm") createOrder(event.target);
+      if (event.target.id === "productForm") {
+        const product = {
+          id: productId.value || crypto.randomUUID(),
+          name: productName.value.trim(),
+          price: Number(productPrice.value),
+          stock: Number(productStock.value),
+          emoji: productEmoji.value.trim() || "🍽",
+          active: productActive.value === "true"
+        };
+        const index = state.products.findIndex(p => p.id === product.id);
+        const previousProducts = state.products.map(item => ({ ...item }));
+        if (index >= 0) state.products[index] = product; else state.products.push(product);
+        const saved = await syncRemote("products", state.products);
+        if (!saved) {
+          state.products = previousProducts;
+          render();
+          return;
+        }
+        saveState(false);
+        emit("product", "Producto guardado", product.name, "soft");
+        render();
+      }
+      if (event.target.id === "configForm") {
+        const windows = parseDeliveryWindows(deliveryWindows.value);
+        if (!windows.length) {
+          emit("config", "Horarios inválidos", "Usa rangos como 09:00-12:00.", "soft");
+          return;
+        }
+        const previousConfig = { ...state.config, deliveryWindows: [...state.config.deliveryWindows] };
+        state.config = {
+          kitchenOpen: kitchenOpen.value === "true",
+          slotMinutes: Number(slotMinutes.value || 15),
+          deliveryWindows: windows
+        };
+        const saved = await syncRemote("config", state.config);
+        if (!saved) {
+          state.config = previousConfig;
+          render();
+          return;
+        }
+        saveState(false);
+        emit("config", "Operación actualizada", state.config.kitchenOpen ? "Cocina abierta" : "Cocina cerrada", "soft");
+        render();
+      }
+      if (event.target.id === "payForm") {
+        const order = state.orders.find(o => o.id === payOrderId);
+        if (!order) return;
+        const previousPayment = order.payment ? { ...order.payment } : null;
+        order.payment = {
+          method: payMethod.value,
+          received: Number(amountReceived.value || 0),
+          change: Math.max(0, Number(amountReceived.value || 0) - orderTotal(order)),
+          at: Date.now()
+        };
+        const delivered = await updateStatus(order.id, "entregado");
+        if (delivered) document.getElementById("payModal").classList.remove("show");
+        else if (previousPayment) order.payment = previousPayment; else delete order.payment;
+      }
+    });
+    document.addEventListener("input", event => {
+      if (event.target.id === "amountReceived") calcChange();
+    });
+    document.getElementById("closePay").addEventListener("click", () => document.getElementById("payModal").classList.remove("show"));
+    document.getElementById("toggleSettings").addEventListener("click", () => document.getElementById("settings").classList.toggle("show"));
+    document.getElementById("saveApi").addEventListener("click", () => {
+      localStorage.setItem(API_KEY, document.getElementById("apiUrl").value.trim());
+      loadRemote();
+    });
+    document.getElementById("testApi").addEventListener("click", async () => {
+      localStorage.setItem(API_KEY, document.getElementById("apiUrl").value.trim());
+      document.getElementById("syncStatus").textContent = "Probando conexión...";
+      try {
+        const data = await callJsonp(getApiUrl(), { action: "bootstrap" });
+        if (!data.ok) throw new Error(data.error || "El script respondió sin ok");
+        document.getElementById("syncStatus").textContent = `Conexión OK: ${data.products?.length || 0} productos`;
+      } catch (error) {
+        document.getElementById("syncStatus").textContent = `Error de conexión: ${error.message}`;
+      }
+    });
+    document.getElementById("enableSound").addEventListener("click", () => {
+      audioReady = true;
+      emit("sound", "Sonido activado", "Las alertas emitirán tonos diferenciados.", "ready");
+    });
+    window.addEventListener("storage", event => {
+      if (event.key === STORE_KEY && event.newValue) {
+        state = normalizeState(JSON.parse(event.newValue));
+        render();
+      }
+    });
+    if (channel) channel.onmessage = event => notify(event.data);
+    document.getElementById("clock").textContent = nowTime();
+    setInterval(() => document.getElementById("clock").textContent = nowTime(), 30000);
+    setInterval(() => {
+      if (["recepcion", "cocina", "entrega", "reportes"].includes(activeView)) loadRemote(true);
+    }, 7000);
+    renderNav();
+    renderIndicators();
+    loadRemote();
+    setView("usuario");
+  </script>
+</body>
+</html>
