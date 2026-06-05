@@ -3,18 +3,18 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Pedido de comida</title>
+  <title>Coyote adobado</title>
   <style>
     :root {
-      --bg: #f7f7f2;
+      --bg: #f5f5f5;
       --panel: #fff;
-      --ink: #202620;
-      --muted: #687166;
-      --line: #dfe5db;
-      --brand: #176b57;
-      --accent: #d94f30;
-      --danger: #b42318;
-      --shadow: 0 14px 38px rgba(28, 38, 32, .10);
+      --ink: #242424;
+      --muted: #6d6d6d;
+      --line: #dedede;
+      --brand: #b91c1c;
+      --accent: #52525b;
+      --danger: #991b1b;
+      --shadow: 0 14px 38px rgba(36, 36, 36, .12);
       font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Arial, sans-serif;
     }
     * { box-sizing: border-box; }
@@ -23,8 +23,8 @@
       min-height: 100vh;
       color: var(--ink);
       background:
-        linear-gradient(135deg, rgba(23,107,87,.10), transparent 36%),
-        linear-gradient(315deg, rgba(217,79,48,.10), transparent 38%),
+        linear-gradient(135deg, rgba(185,28,28,.10), transparent 36%),
+        linear-gradient(315deg, rgba(82,82,91,.10), transparent 38%),
         var(--bg);
     }
     button, input, select { font: inherit; }
@@ -61,6 +61,19 @@
     h2 { margin: 0 0 12px; font-size: 19px; }
     h3 { margin: 0; font-size: 16px; }
     .sub { margin: 7px 0 0; color: var(--muted); }
+    .brandline { display: flex; align-items: center; gap: 10px; }
+    .logo {
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      display: grid;
+      place-items: center;
+      color: #fff;
+      background: linear-gradient(135deg, var(--brand), #ef4444);
+      font-size: 19px;
+      font-weight: 950;
+      flex: 0 0 auto;
+    }
     .status {
       display: grid;
       gap: 6px;
@@ -92,7 +105,7 @@
       display: grid;
       place-items: center;
       font-size: 46px;
-      background: linear-gradient(135deg, rgba(23,107,87,.16), rgba(217,79,48,.12));
+      background: linear-gradient(135deg, rgba(185,28,28,.18), rgba(82,82,91,.12));
       border-bottom: 1px solid var(--line);
     }
     .body { padding: 14px; display: grid; gap: 10px; }
@@ -183,7 +196,7 @@
   <div class="page">
     <header>
       <div>
-        <h1>Pedido de comida</h1>
+        <div class="brandline"><span class="logo">🌶</span><h1>Coyote adobado</h1></div>
         <p class="sub">Selecciona tus productos y horario de entrega.</p>
       </div>
       <div class="status">
@@ -218,7 +231,7 @@
     <div class="progress-modal" role="status" aria-live="polite">
       <div class="spinner"></div>
       <strong id="progressTitle">Enviando pedido</strong>
-      <span id="progressText">Registrando datos en Google Sheets...</span>
+      <span id="progressText">Registrando datos en la base...</span>
     </div>
   </div>
 
@@ -236,7 +249,9 @@
       deliveryWindows: [
         { start: "09:00", end: "12:00" },
         { start: "14:00", end: "18:00" }
-      ]
+      ],
+      currentCutId: "",
+      cuts: []
     };
     let products = fallbackProducts;
     let config = defaultConfig;
@@ -275,7 +290,7 @@
       notice.className = `notice show${isError ? " error" : ""}`;
       setTimeout(() => notice.classList.remove("show"), 4500);
     }
-    function setProgress(show, title = "Enviando pedido", text = "Registrando datos en Google Sheets...") {
+    function setProgress(show, title = "Enviando pedido", text = "Registrando datos en la base...") {
       const modal = document.getElementById("progressModal");
       document.getElementById("progressTitle").textContent = title;
       document.getElementById("progressText").textContent = text;
@@ -327,7 +342,7 @@
         const timeout = setTimeout(() => {
           delete window[callback];
           script.remove();
-          reject(new Error("Google Sheets no respondió"));
+          reject(new Error("El servicio no respondió"));
         }, 12000);
         window[callback] = data => {
           clearTimeout(timeout);
@@ -339,7 +354,7 @@
           clearTimeout(timeout);
           delete window[callback];
           script.remove();
-          reject(new Error("No se pudo leer Sheets"));
+          reject(new Error("No se pudo leer la base"));
         };
         script.src = `${url}${separator}${query.toString()}`;
         document.body.appendChild(script);
@@ -347,7 +362,7 @@
     }
     function submitHiddenForm(url, fields) {
       return new Promise((resolve, reject) => {
-        const timeout = setTimeout(() => reject(new Error("Google Sheets tardó demasiado en responder")), 15000);
+        const timeout = setTimeout(() => reject(new Error("El servicio tardó demasiado en responder")), 15000);
         fetch(url, {
           method: "POST",
           mode: "no-cors",
@@ -389,12 +404,13 @@
         pickupTime: document.getElementById("pickupTime").value,
         items: lines,
         status: "recibido",
+        cutId: config.currentCutId || "",
         createdAt: Date.now(),
         history: [{ status: "recibido", at: Date.now() }]
       };
       document.getElementById("sendOrder").disabled = true;
       document.getElementById("syncStatus").textContent = "Enviando pedido...";
-      setProgress(true, "Enviando pedido", "Registrando datos en Google Sheets...");
+      setProgress(true, "Enviando pedido", "Registrando datos en la base...");
       try {
         await submitHiddenForm(API_URL, { action: "createOrder", payload: JSON.stringify(order) });
         lines.forEach(line => {
