@@ -190,13 +190,59 @@
       .page { padding: 14px; }
       .products { grid-template-columns: 1fr; }
     }
+  
+    /* Modern photo layout */
+    body {
+      background:
+        linear-gradient(180deg, rgba(20, 12, 8, .62), rgba(255, 250, 243, .90) 42%, rgba(255, 250, 243, .98)),
+        url("https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=1800&q=80") center top / cover fixed,
+        #160f0c;
+    }
+    button {
+      border-radius: 8px;
+      background: linear-gradient(135deg, #b91c1c, #7f1d1d);
+      box-shadow: 0 10px 22px rgba(127, 29, 29, .22);
+      transition: transform .18s ease, box-shadow .18s ease, opacity .18s ease;
+    }
+    button:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 14px 28px rgba(127, 29, 29, .28); }
+    input, select { border-radius: 8px; background: rgba(255,255,255,.90); }
+    input:focus, select:focus { outline: none; border-color: rgba(185, 28, 28, .45); box-shadow: 0 0 0 4px rgba(185, 28, 28, .10); }
+    header {
+      padding: 24px;
+      border: 1px solid rgba(255, 255, 255, .36);
+      border-radius: 8px;
+      background: linear-gradient(135deg, rgba(255,255,255,.93), rgba(255,255,255,.74));
+      box-shadow: 0 20px 50px rgba(38, 20, 11, .18);
+      backdrop-filter: blur(16px);
+    }
+    h1 { line-height: .98; }
+    .logo { width: 42px; height: 42px; background: linear-gradient(135deg, #b91c1c, #f59e0b); box-shadow: 0 14px 30px rgba(185,28,28,.28); }
+    .pill { background: rgba(255,255,255,.86); box-shadow: 0 8px 18px rgba(38,20,11,.08); }
+    .layout { grid-template-columns: minmax(0, 1fr) 370px; gap: 18px; }
+    .products { grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 18px; }
+    .product, .cart {
+      background: rgba(255, 250, 243, .94);
+      border: 1px solid rgba(255, 255, 255, .58);
+      box-shadow: 0 20px 50px rgba(38, 20, 11, .18);
+      backdrop-filter: blur(14px);
+    }
+    .product { grid-template-rows: 190px 1fr; transition: transform .18s ease, box-shadow .18s ease; }
+    .product:hover { transform: translateY(-3px); box-shadow: 0 24px 58px rgba(38, 20, 11, .24); }
+    .art { position: relative; overflow: hidden; background: linear-gradient(135deg, rgba(185,28,28,.18), rgba(245,158,11,.16)); }
+    .art::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, transparent 45%, rgba(26, 15, 11, .52)); pointer-events: none; }
+    .art img { width: 100%; height: 100%; object-fit: cover; display: block; transform: scale(1.01); }
+    .art .emoji { position: absolute; right: 12px; bottom: 10px; z-index: 1; width: 42px; height: 42px; display: grid; place-items: center; border-radius: 8px; background: rgba(255,255,255,.88); font-size: 25px; box-shadow: 0 10px 24px rgba(0,0,0,.18); }
+    .body { background: linear-gradient(180deg, rgba(255,255,255,.94), rgba(255,250,243,.96)); }
+    .price { color: #7f1d1d; }
+    .ghost { background: #fff4e5; color: var(--ink); box-shadow: none; }
+    .modal-backdrop { background: rgba(20, 12, 8, .62); backdrop-filter: blur(8px); }
   </style>
 </head>
 <body>
   <div class="page">
     <header>
       <div>
-        <div class="brandline"><span class="logo">🌶</span><h1>Coyote adobado</h1></div>
+        <div class="brandline"><span class="logo">CA</span><h1>Coyote adobado</h1></div>
         <p class="sub">Selecciona tus productos y horario de entrega.</p>
       </div>
       <div class="status">
@@ -212,13 +258,16 @@
       <form class="cart" id="orderForm">
         <h2>Tu pedido</h2>
         <label>Nombre
-          <input id="customerName" required autocomplete="name">
+          <input id="customerName" name="customerName" required autocomplete="name">
         </label>
-        <label>Teléfono
-          <input id="customerPhone" required inputmode="tel" autocomplete="tel">
+        <label>Telefono
+          <input id="customerPhone" name="customerPhone" required inputmode="tel" autocomplete="tel">
+        </label>
+        <label>Departamento
+          <input id="customerDepartment" name="customerDepartment" required autocomplete="organization">
         </label>
         <label>Hora de entrega
-          <select id="pickupTime" required></select>
+          <select id="pickupTime" name="pickupTime" required></select>
         </label>
         <div id="cartLines"></div>
         <div class="total"><span>Total</span><span id="total">$0.00</span></div>
@@ -230,20 +279,14 @@
   <div class="modal-backdrop" id="progressModal" aria-hidden="true">
     <div class="progress-modal" role="status" aria-live="polite">
       <div class="spinner"></div>
-      <strong id="progressTitle">Enviando pedido</strong>
-      <span id="progressText">Registrando datos en la base...</span>
+      <strong id="progressTitle">Cargando productos</strong>
+      <span id="progressText">Consultando la base de datos...</span>
     </div>
   </div>
 
   <script>
-    const API_URL = "https://script.google.com/macros/s/AKfycby7si9hqvx14rSYG_ER8UUHmDJf4NTIVT7qVAvXtVSWHysVgecKxJvpTcXFjiXXIJrrIQ/exec";
-    const fallbackProducts = [
-      { id: crypto.randomUUID(), name: "Torta de pierna", price: 95, stock: 18, emoji: "🥪", active: true },
-      { id: crypto.randomUUID(), name: "Bowl vegetariano", price: 115, stock: 14, emoji: "🥗", active: true },
-      { id: crypto.randomUUID(), name: "Café americano", price: 45, stock: 40, emoji: "☕", active: true },
-      { id: crypto.randomUUID(), name: "Agua natural", price: 25, stock: 60, emoji: "💧", active: true }
-    ];
-    const defaultConfig = {
+    const API_URL = "https://script.google.com/macros/s/AKfycbw8zBnGEYv3eOGN4W8xsbpmjPrz0uQTDtmGcrqjdqyfeyMClN08Ne6GIQ2Wx19kskE7/exec";
+const defaultConfig = {
       kitchenOpen: true,
       slotMinutes: 15,
       deliveryWindows: [
@@ -253,9 +296,36 @@
       currentCutId: "",
       cuts: []
     };
-    let products = fallbackProducts;
+    let products = [];
     let config = defaultConfig;
     let cart = {};
+
+    const PRODUCT_IMAGE_FALLBACKS = [
+      { words: ["burrito", "burro"], url: "https://images.unsplash.com/photo-1626700051175-6818013e1d4f?auto=format&fit=crop&w=900&q=80" },
+      { words: ["taco", "quesadilla"], url: "https://images.unsplash.com/photo-1565299585323-38d6b0865b47?auto=format&fit=crop&w=900&q=80" },
+      { words: ["torta", "sandwich"], url: "https://images.unsplash.com/photo-1528735602780-2552fd46c7af?auto=format&fit=crop&w=900&q=80" },
+      { words: ["bowl", "ensalada", "vegetariano"], url: "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&w=900&q=80" },
+      { words: ["cafe", "capuchino", "americano"], url: "https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&w=900&q=80" },
+      { words: ["agua", "bebida", "refresco"], url: "https://images.unsplash.com/photo-1548839140-29a749e1cf4d?auto=format&fit=crop&w=900&q=80" },
+      { words: ["galleta", "postre", "pan"], url: "https://images.unsplash.com/photo-1499636136210-6f4ee915583e?auto=format&fit=crop&w=900&q=80" }
+    ];
+    const DEFAULT_PRODUCT_IMAGE = "https://images.unsplash.com/photo-1565299507177-b0ac66763828?auto=format&fit=crop&w=900&q=80";
+    function normalizeProductText(value) {
+      return String(value || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+    }
+    function escapeAttr(value) {
+      return String(value || "").replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;");
+    }
+    function productInitial(product) {
+      return normalizeProductText(product.name).slice(0, 1).toUpperCase() || "C";
+    }
+    function productImage(product) {
+      const direct = product.imageUrl || product.image || product.photo || product.picture;
+      if (direct) return direct;
+      const name = normalizeProductText(product.name);
+      const match = PRODUCT_IMAGE_FALLBACKS.find(item => item.words.some(word => name.includes(word)));
+      return match ? match.url : DEFAULT_PRODUCT_IMAGE;
+    }
 
     function money(value) {
       return new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN" }).format(Number(value || 0));
@@ -302,7 +372,7 @@
       const list = activeProducts();
       document.getElementById("products").innerHTML = list.map(product => `
         <article class="product">
-          <div class="art">${product.emoji || "🍽"}</div>
+          <div class="art"><img src="${escapeAttr(productImage(product))}" alt="${escapeAttr(product.name)}" loading="lazy"></div>
           <div class="body">
             <div class="row">
               <h3>${product.name}</h3>
@@ -310,13 +380,13 @@
             </div>
             <span class="stock">${product.stock} disponibles</span>
             <div class="qty">
-              <button type="button" class="ghost" data-dec="${product.id}">−</button>
+              <button type="button" class="ghost" data-dec="${product.id}">-</button>
               <strong>${cart[product.id] || 0}</strong>
               <button type="button" data-inc="${product.id}" ${(cart[product.id] || 0) >= product.stock ? "disabled" : ""}>+</button>
             </div>
           </div>
         </article>
-      `).join("") || `<div class="empty">${config.kitchenOpen ? "No hay productos disponibles." : "La cocina está cerrada."}</div>`;
+      `).join("") || `<div class="empty">${config.kitchenOpen ? "No hay productos disponibles." : "La cocina esta cerrada."}</div>`;
 
       const slots = deliverySlots();
       const selected = suggestedSlot(slots);
@@ -328,7 +398,7 @@
       }).filter(Boolean);
       const total = lines.reduce((sum, item) => sum + item.price * item.qty, 0);
       document.getElementById("cartLines").innerHTML = lines.map(item => `
-        <div class="line"><span>${item.qty} × ${item.name}</span><strong>${money(item.price * item.qty)}</strong></div>
+        <div class="line"><span>${item.qty} x ${item.name}</span><strong>${money(item.price * item.qty)}</strong></div>
       `).join("") || `<div class="empty">Agrega productos al pedido.</div>`;
       document.getElementById("total").textContent = money(total);
       document.getElementById("sendOrder").disabled = !lines.length || !config.kitchenOpen || !slots.length;
@@ -342,7 +412,7 @@
         const timeout = setTimeout(() => {
           delete window[callback];
           script.remove();
-          reject(new Error("El servicio no respondió"));
+          reject(new Error("El servicio no respondio"));
         }, 12000);
         window[callback] = data => {
           clearTimeout(timeout);
@@ -362,7 +432,7 @@
     }
     function submitHiddenForm(url, fields) {
       return new Promise((resolve, reject) => {
-        const timeout = setTimeout(() => reject(new Error("El servicio tardó demasiado en responder")), 15000);
+        const timeout = setTimeout(() => reject(new Error("El servicio tardo demasiado en responder")), 15000);
         fetch(url, {
           method: "POST",
           mode: "no-cors",
@@ -378,14 +448,20 @@
       });
     }
     async function loadRemote() {
+      setProgress(true, "Cargando productos", "Consultando la base de datos...");
+      document.getElementById("syncStatus").textContent = "Cargando productos...";
       try {
         const data = await callJsonp(API_URL, { action: "bootstrap" });
-        if (Array.isArray(data.products) && data.products.length) products = data.products;
+        products = Array.isArray(data.products) ? data.products : [];
         if (data.config) config = { ...defaultConfig, ...data.config };
         document.getElementById("syncStatus").textContent = "Productos sincronizados";
       } catch (error) {
-        document.getElementById("syncStatus").textContent = "Modo local sin conexión";
+        products = [];
+        cart = {};
+        document.getElementById("syncStatus").textContent = "No se pudieron cargar productos";
         showNotice(error.message, true);
+      } finally {
+        setProgress(false);
       }
       render();
     }
@@ -401,6 +477,7 @@
         id: crypto.randomUUID(),
         customerName: document.getElementById("customerName").value.trim(),
         customerPhone: document.getElementById("customerPhone").value.trim(),
+        customerDepartment: document.getElementById("customerDepartment").value.trim(),
         pickupTime: document.getElementById("pickupTime").value,
         items: lines,
         status: "recibido",
@@ -420,7 +497,7 @@
         cart = {};
         document.getElementById("orderForm").reset();
         document.getElementById("syncStatus").textContent = "Pedido enviado";
-        showNotice("Pedido enviado. Pasa a recepción para confirmar tu entrega.");
+        showNotice("Pedido enviado. Pasa a recepcion para confirmar tu entrega.");
       } catch (error) {
         document.getElementById("syncStatus").textContent = "No se pudo enviar";
         showNotice(error.message, true);
@@ -443,8 +520,19 @@
       }
     });
     document.getElementById("orderForm").addEventListener("submit", createOrder);
-    render();
     loadRemote();
   </script>
 </body>
 </html>
+
+
+
+
+
+
+
+
+
+
+
+
