@@ -45,10 +45,10 @@
           <div id="menuList" class="menu-list" aria-live="polite"></div>
         </section>
 
-        <aside class="cart-panel" aria-label="Carrito">
+        <aside class="cart-panel" id="cartPanel" aria-label="Carrito">
           <div class="section-head compact">
             <div>
-              <h2>Pedido</h2>
+              <h2><span aria-hidden="true">🛒</span> Tu carrito</h2>
               <p id="cartCount">Sin productos</p>
             </div>
             <button class="icon-button danger-soft" id="clearCartButton" type="button" aria-label="Vaciar pedido" title="Vaciar pedido">
@@ -75,10 +75,25 @@
           </form>
 
           <div id="guestHistory" class="guest-history"></div>
+          <div class="privacy-note">
+            <strong>Solo tú puedes ver tus pedidos</strong>
+            <span>Tus pedidos son privados y seguros.</span>
+          </div>
         </aside>
       </section>
     </main>
   </div>
+
+  <nav class="guest-bottom-nav" aria-label="Navegación de invitado">
+    <button type="button" data-scroll-target="menuList"><span>⌂</span>Menú</button>
+    <button type="button" data-scroll-target="guestHistory"><span>☷</span>Mis pedidos</button>
+    <button class="cart-nav-action" type="button" data-scroll-target="cartPanel">
+      <span>🛒</span>
+      <i data-cart-total class="hidden">0</i>
+      Carrito
+    </button>
+    <button type="button" data-scroll-target="orderForm"><span>♙</span>Invitado</button>
+  </nav>
 
   <dialog id="settingsDialog">
     <form method="dialog" class="dialog-body">

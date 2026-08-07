@@ -34,6 +34,7 @@ const state = {
   lastOrdersSync: '',
   statusFilter: '',
   search: '',
+  menuCategory: 'Alimentos',
   kitchenTimer: null,
   productTimer: null,
   guestStatusTimer: null
@@ -132,6 +133,12 @@ function bindEvents() {
     localStorage.setItem(STORAGE.history, JSON.stringify(state.history));
     renderHistory();
   });
+  document.querySelectorAll('[data-scroll-target]').forEach(button => {
+    button.addEventListener('click', () => {
+      const target = document.getElementById(button.dataset.scrollTarget);
+      if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  });
 }
 
 function switchView(viewId) {
@@ -156,17 +163,29 @@ function renderConnection() {
 
 function renderMenu() {
   const products = Array.isArray(state.products) && state.products.length ? state.products : DEFAULT_PRODUCTS;
-  const grouped = groupBy(products.slice().sort((a, b) => Number(a.orden) - Number(b.orden)), 'categoria');
-  els.menuList.innerHTML = Object.entries(grouped).map(([category, products]) => `
-    <div class="menu-category">
-      <div class="section-head compact">
-        <h3>${escapeHtml(category)}</h3>
-      </div>
-      <div class="menu-list">
-        ${products.map(productCard).join('')}
-      </div>
+  const sorted = products.slice().sort((a, b) => Number(a.orden) - Number(b.orden));
+  const categories = Object.keys(groupBy(sorted, 'categoria'));
+  els.menuList.innerHTML = `
+    <div class="menu-tabs">
+      ${categories.map(category => `
+        <button type="button" class="${state.menuCategory === category ? 'active' : ''}" data-menu-category="${escapeHtml(category)}">
+          <span>${categoryIcon(category)}</span>${escapeHtml(category)}
+        </button>
+      `).join('')}
     </div>
-  `).join('');
+    <div class="products-showcase">
+      ${sorted.map(productCard).join('')}
+    </div>
+  `;
+
+  els.menuList.querySelectorAll('[data-menu-category]').forEach(button => {
+    button.addEventListener('click', () => {
+      state.menuCategory = button.dataset.menuCategory;
+      const first = Array.from(els.menuList.querySelectorAll('[data-product-category]')).find(card => card.dataset.productCategory === state.menuCategory);
+      if (first) first.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      renderMenu();
+    });
+  });
 
   els.menuList.querySelectorAll('[data-add]').forEach(button => {
     button.addEventListener('click', () => changeCart(button.dataset.add, 1));
@@ -184,19 +203,20 @@ function productCard(product) {
   const disabled = !product.disponible ? 'disabled' : '';
   const ingredients = getIngredientOptions(product.id);
   const selected = getSelectedIngredients(product.id);
+  const isFood = product.categoria === 'Alimentos';
   return `
-    <article class="product-card ${product.disponible ? '' : 'unavailable'}">
+    <article class="product-card ${isFood ? 'food-card' : 'drink-card'} ${product.disponible ? '' : 'unavailable'}" data-product-category="${escapeHtml(product.categoria)}">
       <img class="product-photo" src="${productPhoto(product)}" alt="" loading="lazy">
       <div class="product-info">
         <h3>${escapeHtml(product.nombre)}</h3>
         <p>${escapeHtml(product.descripcion || '')}</p>
         <div class="product-meta">
-          <span class="pill">${escapeHtml(product.categoria)}</span>
+          <span class="pill"><span class="dot"></span>${product.categoria === 'Alimentos' ? 'Alimento' : 'Bebida'}</span>
           <span class="pill">${product.disponible ? 'Disponible' : 'Agotado'}</span>
         </div>
         ${ingredients.length ? `
           <div class="ingredient-picker ${qty ? '' : 'muted-picker'}">
-            <strong>Ingredientes</strong>
+            <strong>Ingredientes (puedes quitar los que no quieras)</strong>
             <div class="ingredient-options">
               ${ingredients.map(ingredient => `
                 <label class="ingredient-chip">
@@ -213,6 +233,9 @@ function productCard(product) {
         <span>${qty}</span>
         <button type="button" data-add="${product.id}" ${disabled}>+</button>
       </div>
+      <button class="add-product-button ${isFood ? 'food-action' : 'drink-action'}" type="button" data-add="${product.id}" ${disabled}>
+        <span aria-hidden="true">🛒</span> Agregar
+      </button>
     </article>
   `;
 }
@@ -221,6 +244,7 @@ function renderCart() {
   const lines = cartLines();
   const total = lines.reduce((sum, line) => sum + line.quantity, 0);
   els.cartCount.textContent = total ? `${total} producto${total === 1 ? '' : 's'}` : 'Sin productos';
+  updateBottomCartCount(total);
 
   if (!lines.length) {
     els.cartItems.className = 'cart-items empty';
@@ -231,9 +255,10 @@ function renderCart() {
   els.cartItems.className = 'cart-items';
   els.cartItems.innerHTML = lines.map(line => `
     <div class="cart-line">
+      <img class="cart-thumb" src="${productPhoto(line.product)}" alt="" loading="lazy">
       <div>
         <strong>${escapeHtml(line.product.nombre)}</strong>
-        <p>${escapeHtml(line.product.categoria)}</p>
+        <p><span class="cart-qty">${line.quantity}</span> ${escapeHtml(line.product.categoria)}</p>
         ${line.notes ? `<small>${escapeHtml(line.notes)}</small>` : ''}
       </div>
       <div class="qty-control">
@@ -731,6 +756,17 @@ function labelStatus(status) {
     ENTREGADO: 'Entregar',
     CANCELADO: 'Cancelar'
   }[status] || status;
+}
+
+function categoryIcon(category) {
+  return category === 'Alimentos' ? '🍔' : '🧋';
+}
+
+function updateBottomCartCount(total) {
+  document.querySelectorAll('[data-cart-total]').forEach(item => {
+    item.textContent = String(total);
+    item.classList.toggle('hidden', total < 1);
+  });
 }
 
 function statusMessage(status) {

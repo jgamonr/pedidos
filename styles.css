@@ -106,6 +106,14 @@ button {
   backdrop-filter: blur(12px);
 }
 
+.guest-only .topbar {
+  display: none;
+}
+
+.guest-only .app-shell {
+  padding-top: max(10px, env(safe-area-inset-top));
+}
+
 .brand {
   display: flex;
   align-items: center;
@@ -588,6 +596,263 @@ textarea {
   display: grid;
   gap: 8px;
   margin-top: 14px;
+}
+
+.menu-tabs {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  border-bottom: 1px solid var(--line);
+  margin-bottom: 14px;
+}
+
+.menu-tabs button {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  min-height: 48px;
+  border: 0;
+  border-bottom: 3px solid transparent;
+  background: transparent;
+  color: #475569;
+  font-weight: 900;
+}
+
+.menu-tabs button.active {
+  border-bottom-color: #f97316;
+  color: #ea580c;
+}
+
+.products-showcase {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(280px, 1fr));
+  gap: 12px;
+}
+
+.add-product-button {
+  align-self: end;
+  border: 0;
+  border-radius: 8px;
+  min-height: 46px;
+  padding: 10px 16px;
+  color: #fff;
+  font-weight: 900;
+  box-shadow: 0 10px 18px rgba(234, 88, 12, 0.2);
+}
+
+.food-action {
+  background: linear-gradient(135deg, #f97316, #ea580c);
+}
+
+.drink-action {
+  background: linear-gradient(135deg, #2563eb, #0f4edb);
+}
+
+.privacy-note {
+  display: grid;
+  gap: 4px;
+  margin-top: 14px;
+  border: 1px solid #bfdbfe;
+  border-radius: 8px;
+  background: #eff6ff;
+  color: #1d4ed8;
+  padding: 12px;
+  font-size: 0.86rem;
+}
+
+.privacy-note span {
+  color: #315da8;
+}
+
+.cart-thumb {
+  width: 58px;
+  height: 58px;
+  border-radius: 8px;
+  object-fit: cover;
+}
+
+.cart-qty {
+  display: inline-grid;
+  place-items: center;
+  min-width: 24px;
+  height: 24px;
+  border-radius: 999px;
+  background: #93c5fd;
+  color: #fff;
+  font-weight: 900;
+}
+
+.guest-bottom-nav {
+  position: fixed;
+  left: 18px;
+  right: 18px;
+  bottom: max(10px, env(safe-area-inset-bottom));
+  z-index: 60;
+  display: none;
+  grid-template-columns: repeat(4, 1fr);
+  align-items: center;
+  gap: 6px;
+  min-height: 70px;
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: 0 16px 45px rgba(15, 23, 42, 0.18);
+  backdrop-filter: blur(14px);
+  padding: 8px 12px;
+}
+
+.guest-bottom-nav button {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  gap: 3px;
+  border: 0;
+  background: transparent;
+  color: #334155;
+  font-size: 0.74rem;
+  font-weight: 800;
+}
+
+.guest-bottom-nav span {
+  font-size: 1.35rem;
+  line-height: 1;
+}
+
+.cart-nav-action {
+  color: #0f4edb !important;
+  transform: translateY(-14px);
+}
+
+.cart-nav-action span {
+  display: grid;
+  place-items: center;
+  width: 58px;
+  height: 58px;
+  border-radius: 50%;
+  background: #0f4edb;
+  color: #fff;
+  box-shadow: 0 10px 24px rgba(15, 78, 219, 0.36);
+}
+
+.cart-nav-action i {
+  position: absolute;
+  top: 0;
+  right: calc(50% - 30px);
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #eff6ff;
+  color: #0f4edb;
+  font-style: normal;
+  font-size: 0.76rem;
+  font-weight: 900;
+}
+
+.guest-only {
+  background: #f8fafc;
+}
+
+.guest-only .background-carousel {
+  opacity: 0.12;
+}
+
+.guest-only .app-shell {
+  padding-bottom: 104px;
+}
+
+.guest-only #guestView {
+  grid-template-columns: minmax(0, 1fr) 310px;
+  gap: 22px;
+  max-width: 1260px;
+}
+
+.guest-only .order-panel,
+.guest-only .cart-panel {
+  background: rgba(255, 255, 255, 0.92);
+  border: 0;
+  box-shadow: 0 18px 50px rgba(15, 23, 42, 0.08);
+}
+
+.guest-only .order-panel > .section-head h2::after {
+  content: " 🎉";
+}
+
+.guest-only .food-card {
+  grid-template-columns: 1fr 130px;
+  grid-template-areas:
+    "photo photo"
+    "info info"
+    "qty action";
+  padding: 14px;
+  border: 0;
+  border-radius: 14px;
+}
+
+.guest-only .drink-card {
+  grid-template-columns: 112px minmax(0, 1fr);
+  grid-template-areas:
+    "photo info"
+    "photo info"
+    "qty action";
+  border: 0;
+  border-radius: 14px;
+}
+
+.guest-only .product-card::before {
+  content: none;
+}
+
+.guest-only .product-photo {
+  grid-area: photo;
+  width: 100%;
+  height: 180px;
+  border-radius: 10px;
+}
+
+.guest-only .drink-card .product-photo {
+  height: 170px;
+}
+
+.guest-only .product-info {
+  grid-area: info;
+}
+
+.guest-only .qty-control {
+  grid-area: qty;
+}
+
+.guest-only .add-product-button {
+  grid-area: action;
+}
+
+.guest-only .drink-card .ingredient-picker {
+  display: none;
+}
+
+.guest-only .cart-panel {
+  top: 14px;
+}
+
+.guest-only .cart-line {
+  grid-template-columns: 58px 1fr auto;
+  border: 0;
+  background: #fff;
+}
+
+.guest-only .cart-line .qty-control {
+  grid-template-columns: 34px;
+}
+
+.guest-only .cart-line .qty-control span,
+.guest-only .cart-line .qty-control [data-cart-add] {
+  display: none;
+}
+
+.guest-only .guest-bottom-nav {
+  display: grid;
 }
 
 .history-card {
