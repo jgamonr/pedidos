@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Fiesta Pedidos">
+  <rect width="512" height="512" rx="96" fill="#0f766e"/>
+  <circle cx="382" cy="120" r="54" fill="#f59e0b"/>
+  <path d="M116 186h280c14 0 26 12 26 26v42c0 14-12 26-26 26H116c-14 0-26-12-26-26v-42c0-14 12-26 26-26Z" fill="#fff7ed"/>
+  <path d="M122 288h268l-25 86c-10 33-40 56-75 56H222c-35 0-65-23-75-56l-25-86Z" fill="#f97316"/>
+  <path d="M142 204c23-37 63-60 108-60h12c45 0 85 23 108 60H142Z" fill="#fed7aa"/>
+  <path d="M146 242h220" stroke="#0f766e" stroke-width="24" stroke-linecap="round"/>
+  <path d="M202 340h108" stroke="#fff7ed" stroke-width="26" stroke-linecap="round"/>
+</svg>
+

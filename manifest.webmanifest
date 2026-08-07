@@ -1,0 +1,19 @@
+{
+  "name": "Fiesta Pedidos",
+  "short_name": "Pedidos",
+  "description": "Pedidos de alimentos y bebidas para fiesta privada",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#f8fafc",
+  "theme_color": "#0f766e",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "./assets/icon.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
+
