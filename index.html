@@ -2,537 +2,110 @@
 <html lang="es">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Coyote adobado</title>
-  <style>
-    :root {
-      --bg: #f5f5f5;
-      --panel: #fff;
-      --ink: #242424;
-      --muted: #6d6d6d;
-      --line: #dedede;
-      --brand: #b91c1c;
-      --accent: #52525b;
-      --danger: #991b1b;
-      --shadow: 0 14px 38px rgba(36, 36, 36, .12);
-      font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Arial, sans-serif;
-    }
-    * { box-sizing: border-box; }
-    body {
-      margin: 0;
-      min-height: 100vh;
-      color: var(--ink);
-      background:
-        linear-gradient(135deg, rgba(185,28,28,.10), transparent 36%),
-        linear-gradient(315deg, rgba(82,82,91,.10), transparent 38%),
-        var(--bg);
-    }
-    button, input, select { font: inherit; }
-    button {
-      border: 0;
-      border-radius: 7px;
-      background: var(--brand);
-      color: #fff;
-      padding: 11px 14px;
-      min-height: 42px;
-      cursor: pointer;
-      font-weight: 800;
-    }
-    button:disabled { opacity: .45; cursor: not-allowed; }
-    input, select {
-      width: 100%;
-      border: 1px solid var(--line);
-      border-radius: 7px;
-      background: #fff;
-      color: var(--ink);
-      padding: 11px;
-      min-height: 42px;
-    }
-    label { display: grid; gap: 6px; color: var(--muted); font-size: 13px; font-weight: 800; }
-    .page { width: min(1180px, 100%); margin: 0 auto; padding: 22px; }
-    header {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      gap: 16px;
-      margin-bottom: 18px;
-    }
-    h1 { margin: 0; font-size: clamp(28px, 5vw, 46px); letter-spacing: 0; }
-    h2 { margin: 0 0 12px; font-size: 19px; }
-    h3 { margin: 0; font-size: 16px; }
-    .sub { margin: 7px 0 0; color: var(--muted); }
-    .brandline { display: flex; align-items: center; gap: 10px; }
-    .logo {
-      width: 36px;
-      height: 36px;
-      border-radius: 8px;
-      display: grid;
-      place-items: center;
-      color: #fff;
-      background: linear-gradient(135deg, var(--brand), #ef4444);
-      font-size: 19px;
-      font-weight: 950;
-      flex: 0 0 auto;
-    }
-    .status {
-      display: grid;
-      gap: 6px;
-      justify-items: end;
-      color: var(--muted);
-      font-size: 13px;
-      font-weight: 800;
-      text-align: right;
-    }
-    .pill {
-      border: 1px solid var(--line);
-      background: rgba(255,255,255,.86);
-      border-radius: 999px;
-      padding: 7px 10px;
-      color: var(--brand);
-      white-space: nowrap;
-    }
-    .layout { display: grid; grid-template-columns: 1fr 360px; gap: 16px; align-items: start; }
-    .products { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 14px; }
-    .product, .cart {
-      background: var(--panel);
-      border: 1px solid var(--line);
-      border-radius: 8px;
-      box-shadow: var(--shadow);
-      overflow: hidden;
-    }
-    .product { display: grid; grid-template-rows: 120px 1fr; }
-    .art {
-      display: grid;
-      place-items: center;
-      font-size: 46px;
-      background: linear-gradient(135deg, rgba(185,28,28,.18), rgba(82,82,91,.12));
-      border-bottom: 1px solid var(--line);
-    }
-    .body { padding: 14px; display: grid; gap: 10px; }
-    .row { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
-    .price { font-size: 22px; font-weight: 950; }
-    .stock { color: var(--muted); font-size: 13px; font-weight: 800; }
-    .qty { display: grid; grid-template-columns: 42px 1fr 42px; align-items: center; gap: 8px; }
-    .qty strong { text-align: center; }
-    .qty button { padding: 0; font-size: 22px; }
-    .ghost { background: #eef2ed; color: var(--ink); }
-    .cart {
-      position: sticky;
-      top: 18px;
-      padding: 16px;
-      display: grid;
-      gap: 12px;
-    }
-    .line {
-      display: grid;
-      grid-template-columns: 1fr auto;
-      gap: 10px;
-      padding: 8px 0;
-      border-bottom: 1px solid var(--line);
-    }
-    .line:last-child { border-bottom: 0; }
-    .total { display: flex; justify-content: space-between; font-size: 23px; font-weight: 950; }
-    .empty {
-      color: var(--muted);
-      padding: 15px;
-      border: 1px dashed var(--line);
-      border-radius: 8px;
-      background: rgba(255,255,255,.62);
-    }
-    .notice {
-      background: #101915;
-      color: #fff;
-      border-radius: 8px;
-      padding: 12px 14px;
-      display: none;
-    }
-    .notice.show { display: block; }
-    .notice.error { background: var(--danger); }
-    .modal-backdrop {
-      position: fixed;
-      inset: 0;
-      background: rgba(11, 18, 16, .52);
-      display: none;
-      place-items: center;
-      padding: 16px;
-      z-index: 20;
-    }
-    .modal-backdrop.show { display: grid; }
-    .progress-modal {
-      width: min(360px, 100%);
-      background: #fff;
-      border-radius: 8px;
-      box-shadow: 0 24px 70px rgba(0,0,0,.28);
-      padding: 22px;
-      display: grid;
-      gap: 12px;
-      justify-items: center;
-      text-align: center;
-    }
-    .spinner {
-      width: 46px;
-      height: 46px;
-      border: 5px solid #e7ece5;
-      border-top-color: var(--brand);
-      border-radius: 50%;
-      animation: spin .78s linear infinite;
-    }
-    .progress-modal strong { font-size: 18px; }
-    .progress-modal span { color: var(--muted); font-size: 13px; }
-    @keyframes spin { to { transform: rotate(360deg); } }
-    @media (max-width: 900px) {
-      .layout { grid-template-columns: 1fr; }
-      .cart { position: static; }
-      header { flex-direction: column; }
-      .status { justify-items: start; text-align: left; }
-    }
-    @media (max-width: 560px) {
-      .page { padding: 14px; }
-      .products { grid-template-columns: 1fr; }
-    }
-  
-    /* Modern photo layout */
-    body {
-      background:
-        linear-gradient(180deg, rgba(20, 12, 8, .62), rgba(255, 250, 243, .90) 42%, rgba(255, 250, 243, .98)),
-        url("https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=1800&q=80") center top / cover fixed,
-        #160f0c;
-    }
-    button {
-      border-radius: 8px;
-      background: linear-gradient(135deg, #b91c1c, #7f1d1d);
-      box-shadow: 0 10px 22px rgba(127, 29, 29, .22);
-      transition: transform .18s ease, box-shadow .18s ease, opacity .18s ease;
-    }
-    button:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 14px 28px rgba(127, 29, 29, .28); }
-    input, select { border-radius: 8px; background: rgba(255,255,255,.90); }
-    input:focus, select:focus { outline: none; border-color: rgba(185, 28, 28, .45); box-shadow: 0 0 0 4px rgba(185, 28, 28, .10); }
-    header {
-      padding: 24px;
-      border: 1px solid rgba(255, 255, 255, .36);
-      border-radius: 8px;
-      background: linear-gradient(135deg, rgba(255,255,255,.93), rgba(255,255,255,.74));
-      box-shadow: 0 20px 50px rgba(38, 20, 11, .18);
-      backdrop-filter: blur(16px);
-    }
-    h1 { line-height: .98; }
-    .logo { width: 42px; height: 42px; background: linear-gradient(135deg, #b91c1c, #f59e0b); box-shadow: 0 14px 30px rgba(185,28,28,.28); }
-    .pill { background: rgba(255,255,255,.86); box-shadow: 0 8px 18px rgba(38,20,11,.08); }
-    .layout { grid-template-columns: minmax(0, 1fr) 370px; gap: 18px; }
-    .products { grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 18px; }
-    .product, .cart {
-      background: rgba(255, 250, 243, .94);
-      border: 1px solid rgba(255, 255, 255, .58);
-      box-shadow: 0 20px 50px rgba(38, 20, 11, .18);
-      backdrop-filter: blur(14px);
-    }
-    .product { grid-template-rows: 190px 1fr; transition: transform .18s ease, box-shadow .18s ease; }
-    .product:hover { transform: translateY(-3px); box-shadow: 0 24px 58px rgba(38, 20, 11, .24); }
-    .art { position: relative; overflow: hidden; background: linear-gradient(135deg, rgba(185,28,28,.18), rgba(245,158,11,.16)); }
-    .art::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, transparent 45%, rgba(26, 15, 11, .52)); pointer-events: none; }
-    .art img { width: 100%; height: 100%; object-fit: cover; display: block; transform: scale(1.01); }
-    .art .emoji { position: absolute; right: 12px; bottom: 10px; z-index: 1; width: 42px; height: 42px; display: grid; place-items: center; border-radius: 8px; background: rgba(255,255,255,.88); font-size: 25px; box-shadow: 0 10px 24px rgba(0,0,0,.18); }
-    .body { background: linear-gradient(180deg, rgba(255,255,255,.94), rgba(255,250,243,.96)); }
-    .price { color: #7f1d1d; }
-    .ghost { background: #fff4e5; color: var(--ink); box-shadow: none; }
-    .modal-backdrop { background: rgba(20, 12, 8, .62); backdrop-filter: blur(8px); }
-  </style>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0f766e">
+  <title>Fiesta Pedidos</title>
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="icon" href="./assets/icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="./styles.css">
+  <script>
+    window.FIESTA_API_URL = 'https://script.google.com/macros/s/AKfycbxRhUMtLUX8wg8bfq2VubzhhSfE_7gh0zM6NpWrQTA5cu6WIkysuFdBqfMt6wjyU_bCMA/exec';
+  </script>
 </head>
-<body>
-  <div class="page">
-    <header>
-      <div>
-        <div class="brandline"><span class="logo">CA</span><h1>Coyote adobado</h1></div>
-        <p class="sub">Selecciona tus productos y horario de entrega.</p>
+<body class="guest-only">
+  <div class="background-carousel" aria-hidden="true">
+    <div class="bg-slide bg-one"></div>
+    <div class="bg-slide bg-two"></div>
+    <div class="bg-slide bg-three"></div>
+  </div>
+  <div class="app-shell">
+    <header class="topbar">
+      <div class="brand">
+        <img src="./assets/icon.svg" alt="" class="brand-icon">
+        <div>
+          <h1>Fiesta Pedidos</h1>
+          <p id="connectionText">Conectando...</p>
+        </div>
       </div>
-      <div class="status">
-        <span class="pill" id="kitchenStatus">Cargando cocina...</span>
-        <span id="syncStatus">Conectando a productos...</span>
-      </div>
+      <button class="icon-button" id="settingsButton" type="button" aria-label="Configurar API" title="Configurar API">
+        <span aria-hidden="true">⚙</span>
+      </button>
     </header>
 
-    <div class="notice" id="notice"></div>
-
-    <div class="layout">
-      <section class="products" id="products"></section>
-      <form class="cart" id="orderForm">
-        <h2>Tu pedido</h2>
-        <label>Nombre
-          <input id="customerName" name="customerName" required autocomplete="name">
-        </label>
-        <label>Telefono
-          <input id="customerPhone" name="customerPhone" required inputmode="tel" autocomplete="tel">
-        </label>
-        <label>Departamento
-          <input id="customerDepartment" name="customerDepartment" required autocomplete="organization">
-        </label>
-        <label>Hora de entrega
-          <select id="pickupTime" name="pickupTime" required></select>
-        </label>
-        <div id="cartLines"></div>
-        <div class="total"><span>Total</span><span id="total">$0.00</span></div>
-        <button id="sendOrder" disabled>Enviar pedido</button>
-      </form>
-    </div>
-  </div>
-
-  <div class="modal-backdrop" id="progressModal" aria-hidden="true">
-    <div class="progress-modal" role="status" aria-live="polite">
-      <div class="spinner"></div>
-      <strong id="progressTitle">Cargando productos</strong>
-      <span id="progressText">Consultando la base de datos...</span>
-    </div>
-  </div>
-
-  <script>
-    const API_URL = "https://script.google.com/macros/s/AKfycbw8zBnGEYv3eOGN4W8xsbpmjPrz0uQTDtmGcrqjdqyfeyMClN08Ne6GIQ2Wx19kskE7/exec";
-const defaultConfig = {
-      kitchenOpen: true,
-      slotMinutes: 15,
-      deliveryWindows: [
-        { start: "09:00", end: "12:00" },
-        { start: "14:00", end: "18:00" }
-      ],
-      currentCutId: "",
-      cuts: []
-    };
-    let products = [];
-    let config = defaultConfig;
-    let cart = {};
-
-    const PRODUCT_IMAGE_FALLBACKS = [
-      { words: ["burrito", "burro"], url: "https://images.unsplash.com/photo-1626700051175-6818013e1d4f?auto=format&fit=crop&w=900&q=80" },
-      { words: ["taco", "quesadilla"], url: "https://images.unsplash.com/photo-1565299585323-38d6b0865b47?auto=format&fit=crop&w=900&q=80" },
-      { words: ["torta", "sandwich"], url: "https://images.unsplash.com/photo-1528735602780-2552fd46c7af?auto=format&fit=crop&w=900&q=80" },
-      { words: ["bowl", "ensalada", "vegetariano"], url: "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&w=900&q=80" },
-      { words: ["cafe", "capuchino", "americano"], url: "https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&w=900&q=80" },
-      { words: ["agua", "bebida", "refresco"], url: "https://images.unsplash.com/photo-1548839140-29a749e1cf4d?auto=format&fit=crop&w=900&q=80" },
-      { words: ["galleta", "postre", "pan"], url: "https://images.unsplash.com/photo-1499636136210-6f4ee915583e?auto=format&fit=crop&w=900&q=80" }
-    ];
-    const DEFAULT_PRODUCT_IMAGE = "https://images.unsplash.com/photo-1565299507177-b0ac66763828?auto=format&fit=crop&w=900&q=80";
-    function normalizeProductText(value) {
-      return String(value || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
-    }
-    function escapeAttr(value) {
-      return String(value || "").replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;");
-    }
-    function productInitial(product) {
-      return normalizeProductText(product.name).slice(0, 1).toUpperCase() || "C";
-    }
-    function productImage(product) {
-      const direct = product.imageUrl || product.image || product.photo || product.picture;
-      if (direct) return direct;
-      const name = normalizeProductText(product.name);
-      const match = PRODUCT_IMAGE_FALLBACKS.find(item => item.words.some(word => name.includes(word)));
-      return match ? match.url : DEFAULT_PRODUCT_IMAGE;
-    }
-
-    function money(value) {
-      return new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN" }).format(Number(value || 0));
-    }
-    function activeProducts() {
-      if (!config.kitchenOpen) return [];
-      return products.filter(product => product.active !== false && Number(product.stock) > 0);
-    }
-    function deliverySlots() {
-      const slots = [];
-      const minutes = Math.max(5, Number(config.slotMinutes || 15));
-      for (const window of config.deliveryWindows || []) {
-        const [startHour, startMinute] = window.start.split(":").map(Number);
-        const [endHour, endMinute] = window.end.split(":").map(Number);
-        let current = startHour * 60 + startMinute;
-        const end = endHour * 60 + endMinute;
-        while (current <= end) {
-          slots.push(`${String(Math.floor(current / 60)).padStart(2, "0")}:${String(current % 60).padStart(2, "0")}`);
-          current += minutes;
-        }
-      }
-      return [...new Set(slots)].sort();
-    }
-    function suggestedSlot(slots) {
-      const d = new Date(Date.now() + 20 * 60000);
-      const now = `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
-      return slots.find(slot => slot >= now) || slots[0] || "";
-    }
-    function showNotice(message, isError = false) {
-      const notice = document.getElementById("notice");
-      notice.textContent = message;
-      notice.className = `notice show${isError ? " error" : ""}`;
-      setTimeout(() => notice.classList.remove("show"), 4500);
-    }
-    function setProgress(show, title = "Enviando pedido", text = "Registrando datos en la base...") {
-      const modal = document.getElementById("progressModal");
-      document.getElementById("progressTitle").textContent = title;
-      document.getElementById("progressText").textContent = text;
-      modal.classList.toggle("show", show);
-      modal.setAttribute("aria-hidden", show ? "false" : "true");
-    }
-    function render() {
-      document.getElementById("kitchenStatus").textContent = config.kitchenOpen ? "Cocina abierta" : "Cocina cerrada";
-      const list = activeProducts();
-      document.getElementById("products").innerHTML = list.map(product => `
-        <article class="product">
-          <div class="art"><img src="${escapeAttr(productImage(product))}" alt="${escapeAttr(product.name)}" loading="lazy"></div>
-          <div class="body">
-            <div class="row">
-              <h3>${product.name}</h3>
-              <span class="price">${money(product.price)}</span>
+    <main>
+      <section id="guestView" class="view active">
+        <section class="order-panel">
+          <div class="section-head">
+            <div>
+              <h2>Menú</h2>
+              <p>Selecciona alimentos y bebidas incluidos en el evento.</p>
             </div>
-            <span class="stock">${product.stock} disponibles</span>
-            <div class="qty">
-              <button type="button" class="ghost" data-dec="${product.id}">-</button>
-              <strong>${cart[product.id] || 0}</strong>
-              <button type="button" data-inc="${product.id}" ${(cart[product.id] || 0) >= product.stock ? "disabled" : ""}>+</button>
-            </div>
+            <button class="secondary-button" id="quickOrderButton" type="button">Pedido rápido</button>
           </div>
-        </article>
-      `).join("") || `<div class="empty">${config.kitchenOpen ? "No hay productos disponibles." : "La cocina esta cerrada."}</div>`;
+          <div id="menuList" class="menu-list" aria-live="polite"></div>
+        </section>
 
-      const slots = deliverySlots();
-      const selected = suggestedSlot(slots);
-      document.getElementById("pickupTime").innerHTML = slots.map(slot => `<option value="${slot}" ${slot === selected ? "selected" : ""}>${slot}</option>`).join("");
+        <aside class="cart-panel" aria-label="Carrito">
+          <div class="section-head compact">
+            <div>
+              <h2>Pedido</h2>
+              <p id="cartCount">Sin productos</p>
+            </div>
+            <button class="icon-button danger-soft" id="clearCartButton" type="button" aria-label="Vaciar pedido" title="Vaciar pedido">
+              <span aria-hidden="true">×</span>
+            </button>
+          </div>
 
-      const lines = Object.entries(cart).filter(([, qty]) => qty > 0).map(([id, qty]) => {
-        const product = products.find(item => item.id === id);
-        return product ? { ...product, qty } : null;
-      }).filter(Boolean);
-      const total = lines.reduce((sum, item) => sum + item.price * item.qty, 0);
-      document.getElementById("cartLines").innerHTML = lines.map(item => `
-        <div class="line"><span>${item.qty} x ${item.name}</span><strong>${money(item.price * item.qty)}</strong></div>
-      `).join("") || `<div class="empty">Agrega productos al pedido.</div>`;
-      document.getElementById("total").textContent = money(total);
-      document.getElementById("sendOrder").disabled = !lines.length || !config.kitchenOpen || !slots.length;
-    }
-    function callJsonp(url, params) {
-      return new Promise((resolve, reject) => {
-        const callback = `usuarioPedido${Date.now()}${Math.floor(Math.random() * 1000)}`;
-        const script = document.createElement("script");
-        const separator = url.includes("?") ? "&" : "?";
-        const query = new URLSearchParams({ ...params, callback });
-        const timeout = setTimeout(() => {
-          delete window[callback];
-          script.remove();
-          reject(new Error("El servicio no respondio"));
-        }, 12000);
-        window[callback] = data => {
-          clearTimeout(timeout);
-          delete window[callback];
-          script.remove();
-          resolve(data);
-        };
-        script.onerror = () => {
-          clearTimeout(timeout);
-          delete window[callback];
-          script.remove();
-          reject(new Error("No se pudo leer la base"));
-        };
-        script.src = `${url}${separator}${query.toString()}`;
-        document.body.appendChild(script);
-      });
-    }
-    function submitHiddenForm(url, fields) {
-      return new Promise((resolve, reject) => {
-        const timeout = setTimeout(() => reject(new Error("El servicio tardo demasiado en responder")), 15000);
-        fetch(url, {
-          method: "POST",
-          mode: "no-cors",
-          headers: { "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8" },
-          body: new URLSearchParams(fields)
-        }).then(() => {
-          clearTimeout(timeout);
-          resolve(true);
-        }).catch(error => {
-          clearTimeout(timeout);
-          reject(error);
-        });
-      });
-    }
-    async function loadRemote() {
-      setProgress(true, "Cargando productos", "Consultando la base de datos...");
-      document.getElementById("syncStatus").textContent = "Cargando productos...";
-      try {
-        const data = await callJsonp(API_URL, { action: "bootstrap" });
-        products = Array.isArray(data.products) ? data.products : [];
-        if (data.config) config = { ...defaultConfig, ...data.config };
-        document.getElementById("syncStatus").textContent = "Productos sincronizados";
-      } catch (error) {
-        products = [];
-        cart = {};
-        document.getElementById("syncStatus").textContent = "No se pudieron cargar productos";
-        showNotice(error.message, true);
-      } finally {
-        setProgress(false);
-      }
-      render();
-    }
-    async function createOrder(event) {
-      event.preventDefault();
-      const lines = Object.entries(cart).filter(([, qty]) => qty > 0).map(([id, qty]) => {
-        const product = products.find(item => item.id === id);
-        if (!product || product.stock < qty) return null;
-        return { id, name: product.name, price: Number(product.price), qty };
-      }).filter(Boolean);
-      if (!lines.length || !config.kitchenOpen) return;
-      const order = {
-        id: crypto.randomUUID(),
-        customerName: document.getElementById("customerName").value.trim(),
-        customerPhone: document.getElementById("customerPhone").value.trim(),
-        customerDepartment: document.getElementById("customerDepartment").value.trim(),
-        pickupTime: document.getElementById("pickupTime").value,
-        items: lines,
-        status: "recibido",
-        cutId: config.currentCutId || "",
-        createdAt: Date.now(),
-        history: [{ status: "recibido", at: Date.now() }]
-      };
-      document.getElementById("sendOrder").disabled = true;
-      document.getElementById("syncStatus").textContent = "Enviando pedido...";
-      setProgress(true, "Enviando pedido", "Registrando datos en la base...");
-      try {
-        await submitHiddenForm(API_URL, { action: "createOrder", payload: JSON.stringify(order) });
-        lines.forEach(line => {
-          const product = products.find(item => item.id === line.id);
-          if (product) product.stock -= line.qty;
-        });
-        cart = {};
-        document.getElementById("orderForm").reset();
-        document.getElementById("syncStatus").textContent = "Pedido enviado";
-        showNotice("Pedido enviado. Pasa a recepcion para confirmar tu entrega.");
-      } catch (error) {
-        document.getElementById("syncStatus").textContent = "No se pudo enviar";
-        showNotice(error.message, true);
-      } finally {
-        setProgress(false);
-      }
-      render();
-    }
-    document.addEventListener("click", event => {
-      const button = event.target.closest("button");
-      if (!button) return;
-      if (button.dataset.inc) {
-        const product = products.find(item => item.id === button.dataset.inc);
-        cart[product.id] = Math.min(product.stock, (cart[product.id] || 0) + 1);
-        render();
-      }
-      if (button.dataset.dec) {
-        cart[button.dataset.dec] = Math.max(0, (cart[button.dataset.dec] || 0) - 1);
-        render();
-      }
-    });
-    document.getElementById("orderForm").addEventListener("submit", createOrder);
-    loadRemote();
-  </script>
+          <div id="cartItems" class="cart-items empty">Agrega productos del menú.</div>
+
+          <form id="orderForm" class="order-form">
+            <label>
+              Nombre
+              <input id="guestName" name="guestName" autocomplete="name" required maxlength="80" placeholder="Ej. Ana">
+            </label>
+            <label>
+              Mesa o ubicación <span class="optional-label">opcional</span>
+              <input id="guestLocation" name="guestLocation" maxlength="80" placeholder="Ej. Mesa 4 / Terraza">
+            </label>
+            <label>
+              Notas
+              <textarea id="guestNotes" name="guestNotes" maxlength="300" rows="3" placeholder="Sin cebolla, entregar en barra, etc."></textarea>
+            </label>
+            <button class="primary-button" type="submit" id="submitOrderButton">Enviar pedido</button>
+          </form>
+
+          <div id="guestHistory" class="guest-history"></div>
+        </aside>
+      </section>
+    </main>
+  </div>
+
+  <dialog id="settingsDialog">
+    <form method="dialog" class="dialog-body">
+      <h2>Configuración</h2>
+      <label>
+        URL de Apps Script
+        <input id="apiUrlInput" placeholder="https://script.google.com/macros/s/.../exec">
+      </label>
+      <p>Esta URL se guarda solo en este dispositivo. Los pedidos se guardan en Google Sheets.</p>
+      <div class="dialog-actions">
+        <button class="secondary-button" value="cancel">Cancelar</button>
+        <button class="primary-button" id="saveSettingsButton" value="default">Guardar</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="statusDialog" class="status-dialog">
+    <form method="dialog" class="status-modal">
+      <div class="status-modal-icon" aria-hidden="true">!</div>
+      <span id="statusModalBadge" class="status-badge status-NUEVO">NUEVO</span>
+      <h2 id="statusModalTitle">Tu pedido cambió de estado</h2>
+      <p id="statusModalMessage">Cocina actualizó tu pedido.</p>
+      <button class="primary-button" id="statusModalClose" value="default">Entendido</button>
+    </form>
+  </dialog>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <script src="./app.js"></script>
 </body>
 </html>
-
-
-
-
-
-
-
-
-
-
-
-
