@@ -353,6 +353,10 @@ h3 {
   gap: 12px;
 }
 
+#menuList {
+  display: block;
+}
+
 .menu-category {
   display: grid;
   gap: 10px;
@@ -626,8 +630,9 @@ textarea {
 
 .products-showcase {
   display: grid;
-  grid-template-columns: repeat(2, minmax(280px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
   gap: 12px;
+  min-width: 0;
 }
 
 .add-product-button {
@@ -764,9 +769,14 @@ textarea {
 }
 
 .guest-only #guestView {
-  grid-template-columns: minmax(0, 1fr) 310px;
+  grid-template-columns: minmax(0, 1fr) minmax(290px, 310px);
   gap: 22px;
   max-width: 1260px;
+}
+
+.guest-only .order-panel {
+  min-width: 0;
+  overflow: hidden;
 }
 
 .guest-only .order-panel,
@@ -781,7 +791,7 @@ textarea {
 }
 
 .guest-only .food-card {
-  grid-template-columns: 1fr 130px;
+  grid-template-columns: minmax(0, 1fr) minmax(118px, 130px);
   grid-template-areas:
     "photo photo"
     "info info"
@@ -792,7 +802,7 @@ textarea {
 }
 
 .guest-only .drink-card {
-  grid-template-columns: 112px minmax(0, 1fr);
+  grid-template-columns: 104px minmax(0, 1fr);
   grid-template-areas:
     "photo info"
     "photo info"
@@ -813,7 +823,7 @@ textarea {
 }
 
 .guest-only .drink-card .product-photo {
-  height: 170px;
+  height: 154px;
 }
 
 .guest-only .product-info {
@@ -834,6 +844,7 @@ textarea {
 
 .guest-only .cart-panel {
   top: 14px;
+  z-index: 20;
 }
 
 .guest-only .cart-line {
@@ -1218,6 +1229,16 @@ dialog::backdrop {
   }
 }
 
+@media (max-width: 1120px) {
+  .guest-only #guestView {
+    grid-template-columns: 1fr;
+  }
+
+  .guest-only .cart-panel {
+    position: static;
+  }
+}
+
 @media (max-width: 520px) {
   .app-shell {
     padding-left: 10px;
@@ -1239,6 +1260,21 @@ dialog::backdrop {
 
   .product-card {
     grid-template-columns: 1fr;
+  }
+
+  .guest-only .food-card,
+  .guest-only .drink-card {
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      "photo"
+      "info"
+      "qty"
+      "action";
+  }
+
+  .guest-only .drink-card .product-photo,
+  .guest-only .product-photo {
+    height: 170px;
   }
 
   .qty-control {
