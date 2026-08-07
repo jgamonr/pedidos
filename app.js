@@ -13,6 +13,7 @@ const FOOD_INGREDIENTS = {
 };
 
 const STATUS_FLOW = ['NUEVO', 'PREPARANDO', 'LISTO', 'ENTREGADO'];
+const KITCHEN_COMPAT_PIN = '2468';
 const STORAGE = {
   apiUrl: 'fiesta_api_url',
   cart: 'fiesta_cart',
@@ -481,7 +482,7 @@ async function syncKitchen({ full }) {
 
   try {
     const since = full ? '' : state.lastOrdersSync;
-    const data = await apiGet('orders', { updatedSince: since });
+    const data = await apiGet('orders', { pin: KITCHEN_COMPAT_PIN, updatedSince: since });
     if (!data.ok) throw new Error(data.error || 'No se pudo sincronizar');
 
     if (full) state.orders.clear();
@@ -490,7 +491,7 @@ async function syncKitchen({ full }) {
     els.lastSyncText.textContent = `Actualizado ${formatTime(state.lastOrdersSync)}`;
     renderOrders();
 
-    const summary = await apiGet('summary');
+    const summary = await apiGet('summary', { pin: KITCHEN_COMPAT_PIN });
     if (summary.ok) renderSummary(summary.summary);
   } catch (err) {
     toast(err.message || 'Error de sincronización');
@@ -499,7 +500,7 @@ async function syncKitchen({ full }) {
 
 async function updateStatus(orderId, status) {
   try {
-    const result = await apiPost({ action: 'updateStatus', orderId, status });
+    const result = await apiPost({ action: 'updateStatus', pin: KITCHEN_COMPAT_PIN, orderId, status });
     if (!result.ok) throw new Error(result.error || 'No se pudo actualizar');
     state.orders.set(result.order.orderId, result.order);
     renderOrders();
@@ -512,7 +513,7 @@ async function updateStatus(orderId, status) {
 
 async function updateAvailability(productId, available) {
   try {
-    const result = await apiPost({ action: 'updateAvailability', productId, available });
+    const result = await apiPost({ action: 'updateAvailability', pin: KITCHEN_COMPAT_PIN, productId, available });
     if (!result.ok) throw new Error(result.error || 'No se pudo cambiar disponibilidad');
     state.products = result.products;
     renderMenu();
@@ -598,7 +599,7 @@ async function syncGuestStatuses() {
 
 function notifyGuestStatus(order) {
   const message = `Pedido #${order.folio}: ${statusMessage(order.status)}`;
-  if (order.status === 'LISTO') {
+  if (order.status === 'LISTO' || order.status === 'CANCELADO') {
     showStatusModal(order);
   } else {
     toast(message, 6200);
@@ -619,7 +620,9 @@ function showStatusModal(order) {
   els.statusModalBadge.textContent = order.status || 'NUEVO';
   els.statusModalBadge.className = `status-badge status-${order.status || 'NUEVO'}`;
   els.statusModalTitle.textContent = `Pedido #${order.folio || ''}`;
-  els.statusModalMessage.textContent = 'Tu pedido esta listo para entregar en la zona de alimentos.';
+  els.statusModalMessage.textContent = order.status === 'CANCELADO'
+    ? 'Lo sentimos, tu pedido fue cancelado. Por favor acércate a la zona de alimentos para que podamos ayudarte.'
+    : 'Tu pedido esta listo para entregar en la zona de alimentos.';
 
   if (els.statusDialog.open) els.statusDialog.close();
   els.statusDialog.showModal();
@@ -775,7 +778,7 @@ function statusMessage(status) {
     PREPARANDO: 'Tu pedido ya se esta preparando',
     LISTO: 'Tu pedido esta listo para entregar en la zona de alimentos',
     ENTREGADO: 'Tu pedido fue entregado',
-    CANCELADO: 'Tu pedido fue cancelado'
+    CANCELADO: 'Lo sentimos, tu pedido fue cancelado'
   }[status] || 'Pedido enviado';
 }
 
