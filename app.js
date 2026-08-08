@@ -13,7 +13,6 @@ const FOOD_INGREDIENTS = {
 };
 
 const STATUS_FLOW = ['NUEVO', 'PREPARANDO', 'LISTO', 'ENTREGADO'];
-const KITCHEN_COMPAT_PIN = '2468';
 const STORAGE = {
   apiUrl: 'fiesta_api_url',
   cart: 'fiesta_cart',
@@ -482,7 +481,7 @@ async function syncKitchen({ full }) {
 
   try {
     const since = full ? '' : state.lastOrdersSync;
-    const data = await apiGet('orders', { pin: KITCHEN_COMPAT_PIN, updatedSince: since });
+    const data = await apiGet('orders', { updatedSince: since });
     if (!data.ok) throw new Error(data.error || 'No se pudo sincronizar');
 
     if (full) state.orders.clear();
@@ -491,7 +490,7 @@ async function syncKitchen({ full }) {
     els.lastSyncText.textContent = `Actualizado ${formatTime(state.lastOrdersSync)}`;
     renderOrders();
 
-    const summary = await apiGet('summary', { pin: KITCHEN_COMPAT_PIN });
+    const summary = await apiGet('summary');
     if (summary.ok) renderSummary(summary.summary);
   } catch (err) {
     toast(err.message || 'Error de sincronización');
@@ -500,7 +499,7 @@ async function syncKitchen({ full }) {
 
 async function updateStatus(orderId, status) {
   try {
-    const result = await apiPost({ action: 'updateStatus', pin: KITCHEN_COMPAT_PIN, orderId, status });
+    const result = await apiPost({ action: 'updateStatus', orderId, status });
     if (!result.ok) throw new Error(result.error || 'No se pudo actualizar');
     state.orders.set(result.order.orderId, result.order);
     renderOrders();
@@ -513,7 +512,7 @@ async function updateStatus(orderId, status) {
 
 async function updateAvailability(productId, available) {
   try {
-    const result = await apiPost({ action: 'updateAvailability', pin: KITCHEN_COMPAT_PIN, productId, available });
+    const result = await apiPost({ action: 'updateAvailability', productId, available });
     if (!result.ok) throw new Error(result.error || 'No se pudo cambiar disponibilidad');
     state.products = result.products;
     renderMenu();

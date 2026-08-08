@@ -1,4 +1,4 @@
-const CACHE_NAME = 'fiesta-pedidos-v13';
+const CACHE_NAME = 'fiesta-pedidos-v15';
 const APP_SHELL = [
   './',
   './index.html',
@@ -15,7 +15,9 @@ const APP_SHELL = [
   './assets/photos/agua-ponche.jpg',
   './assets/photos/latte-natural.jpg',
   './assets/photos/latte-crema-irlandesa.jpg',
-  './assets/photos/latte-vainilla.jpg'
+  './assets/photos/latte-vainilla.jpg',
+  './assets/og/og-controlpedidos.jpg',
+  './assets/og/og-pedidos.jpg'
 ];
 
 self.addEventListener('install', event => {
