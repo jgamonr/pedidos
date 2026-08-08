@@ -13,6 +13,7 @@ const FOOD_INGREDIENTS = {
 };
 
 const STATUS_FLOW = ['NUEVO', 'PREPARANDO', 'LISTO', 'ENTREGADO'];
+const DEFAULT_GUEST_APP_URL = 'https://jgamonr.github.io/pedidos/';
 const STORAGE = {
   apiUrl: 'fiesta_api_url',
   cart: 'fiesta_cart',
@@ -27,6 +28,7 @@ const STORAGE = {
 
 const state = {
   apiUrl: localStorage.getItem(STORAGE.apiUrl) || window.FIESTA_API_URL || '',
+  guestAppUrl: window.FIESTA_GUEST_APP_URL || DEFAULT_GUEST_APP_URL,
   guestPhone: normalizePhone(localStorage.getItem(STORAGE.guestPhone) || ''),
   guestSessionId: getInitialGuestSessionId(),
   products: DEFAULT_PRODUCTS,
@@ -41,12 +43,16 @@ const state = {
   menuCategory: 'Alimentos',
   kitchenTimer: null,
   productTimer: null,
-  guestStatusTimer: null
+  guestStatusTimer: null,
+  linkedOrderId: '',
+  forceStatusModal: false,
+  linkedStatusModalShown: new Set()
 };
 
 const els = {};
 
 document.addEventListener('DOMContentLoaded', () => {
+  applyGuestLinkParams();
   bindElements();
   bindEvents();
   hydrateGuestProfile();
@@ -334,16 +340,21 @@ function renderOrders() {
   els.ordersList.querySelectorAll('[data-next-status]').forEach(button => {
     button.addEventListener('click', () => updateStatus(button.dataset.orderId, button.dataset.nextStatus));
   });
+  els.ordersList.querySelectorAll('[data-whatsapp-status]').forEach(button => {
+    button.addEventListener('click', () => openWhatsAppNotice(button.dataset.orderId, button.dataset.whatsappStatus));
+  });
 }
 
 function orderCard(order) {
   const nextStatuses = STATUS_FLOW.filter(status => status !== order.status);
+  const hasPhone = normalizePhone(order.guestPhone).length >= 7;
   return `
     <article class="order-card">
       <header>
         <div>
           <div class="folio">#${escapeHtml(order.folio || '')}</div>
           <h3>${escapeHtml(order.guestName || 'Invitado')}</h3>
+          ${order.guestPhone ? `<p>Tel. ${escapeHtml(order.guestPhone)}</p>` : ''}
           <p>${escapeHtml(order.location || 'Sin ubicación')} · ${formatTime(order.createdAt)}</p>
         </div>
         <span class="pill">${escapeHtml(order.status)}</span>
@@ -372,8 +383,52 @@ function orderCard(order) {
           </button>
         ` : ''}
       </div>
+      <div class="whatsapp-actions">
+        <button class="whatsapp-button" type="button" data-whatsapp-status="LISTO" data-order-id="${order.orderId}" ${hasPhone ? '' : 'disabled'}>
+          WhatsApp listo
+        </button>
+        <button class="whatsapp-button cancel" type="button" data-whatsapp-status="CANCELADO" data-order-id="${order.orderId}" ${hasPhone ? '' : 'disabled'}>
+          WhatsApp cancelado
+        </button>
+      </div>
+      ${hasPhone ? '' : '<small class="phone-warning">Este pedido no tiene tel&eacute;fono registrado.</small>'}
     </article>
   `;
+}
+
+function openWhatsAppNotice(orderId, status) {
+  const order = state.orders.get(orderId);
+  if (!order) return;
+  const phone = whatsappPhone(order.guestPhone);
+  if (!phone) return toast('Este pedido no tiene telefono registrado');
+
+  const message = whatsappMessage(order, status);
+  window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, '_blank', 'noopener');
+}
+
+function whatsappPhone(value) {
+  const digits = normalizePhone(value);
+  if (!digits) return '';
+  if (digits.length === 10) return `52${digits}`;
+  return digits;
+}
+
+function whatsappMessage(order, status) {
+  const name = order.guestName ? ` ${order.guestName}` : '';
+  const folio = order.folio ? ` #${order.folio}` : '';
+  const link = guestStatusLink(order);
+  if (status === 'CANCELADO') {
+    return `Hola${name}, sentimos mucho avisarte que tu pedido${folio} fue cancelado. Por favor acercate a la zona de alimentos para que podamos ayudarte.\n\nConsulta el aviso aqui: ${link}`;
+  }
+  return `Hola${name}, tu pedido${folio} ya esta listo para entregar en la zona de alimentos.\n\nConsulta el aviso aqui: ${link}`;
+}
+
+function guestStatusLink(order) {
+  const url = new URL(state.guestAppUrl || DEFAULT_GUEST_APP_URL);
+  if (order.guestPhone) url.searchParams.set('tel', normalizePhone(order.guestPhone));
+  if (order.orderId) url.searchParams.set('pedido', order.orderId);
+  url.searchParams.set('modal', '1');
+  return url.toString();
 }
 
 function renderAvailability() {
@@ -595,14 +650,22 @@ async function syncGuestStatuses() {
         return remoteOrder.clientRequestId && order.clientRequestId === remoteOrder.clientRequestId;
       });
       if (index === -1) {
-        remoteOrder.attention = false;
+        if (shouldShowLinkedStatusModal(remoteOrder)) {
+          remoteOrder.attention = true;
+          notifyGuestStatus(remoteOrder);
+        } else {
+          remoteOrder.attention = false;
+        }
         state.history.unshift(remoteOrder);
         changed = true;
         return;
       }
 
       const current = state.history[index];
-      if (current.status && current.status !== remoteOrder.status) {
+      if (shouldShowLinkedStatusModal(remoteOrder)) {
+        remoteOrder.attention = true;
+        notifyGuestStatus(remoteOrder);
+      } else if (current.status && current.status !== remoteOrder.status) {
         remoteOrder.attention = true;
         notifyGuestStatus(remoteOrder);
       } else {
@@ -621,6 +684,14 @@ async function syncGuestStatuses() {
   } catch (err) {
     // El seguimiento de invitado es auxiliar; no debe interrumpir el pedido.
   }
+}
+
+function shouldShowLinkedStatusModal(order) {
+  if (!state.forceStatusModal || !state.linkedOrderId || !order || order.orderId !== state.linkedOrderId) return false;
+  if (order.status !== 'LISTO' && order.status !== 'CANCELADO') return false;
+  if (state.linkedStatusModalShown.has(order.orderId)) return false;
+  state.linkedStatusModalShown.add(order.orderId);
+  return true;
 }
 
 function notifyGuestStatus(order) {
@@ -690,6 +761,21 @@ function cartLines() {
 function persistCart() {
   localStorage.setItem(STORAGE.cart, JSON.stringify(state.cart));
   localStorage.setItem(STORAGE.ingredients, JSON.stringify(state.ingredients));
+}
+
+function applyGuestLinkParams() {
+  const params = new URLSearchParams(window.location.search);
+  const phone = normalizePhone(params.get('tel') || params.get('telefono') || params.get('phone') || '');
+  const orderId = String(params.get('pedido') || params.get('orderId') || '').trim();
+  if (phone) {
+    state.guestPhone = phone;
+    state.guestSessionId = sessionIdForPhone(phone);
+    localStorage.setItem(STORAGE.guestPhone, phone);
+    localStorage.setItem(STORAGE.guestSessionId, state.guestSessionId);
+    state.history = filterGuestHistory(readArray(STORAGE.history), phone, state.guestSessionId);
+  }
+  if (orderId) state.linkedOrderId = orderId;
+  state.forceStatusModal = params.get('modal') === '1';
 }
 
 function hydrateGuestProfile() {

@@ -1078,6 +1078,40 @@ textarea {
   color: var(--danger);
 }
 
+.whatsapp-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--line);
+}
+
+.whatsapp-button {
+  border: 0;
+  background: #16a34a;
+  color: #fff;
+  font-weight: 900;
+}
+
+.whatsapp-button.cancel {
+  background: #fee2e2;
+  color: #991b1b;
+  border: 1px solid #fecaca;
+}
+
+.whatsapp-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.phone-warning {
+  display: block;
+  margin-top: 6px;
+  color: var(--muted);
+  font-weight: 700;
+}
+
 .availability-list {
   display: grid;
   gap: 8px;
