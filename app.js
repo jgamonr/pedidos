@@ -27,7 +27,7 @@ const STORAGE = {
 };
 
 const state = {
-  apiUrl: localStorage.getItem(STORAGE.apiUrl) || window.FIESTA_API_URL || '',
+  apiUrl: window.FIESTA_API_URL || localStorage.getItem(STORAGE.apiUrl) || '',
   guestAppUrl: window.FIESTA_GUEST_APP_URL || DEFAULT_GUEST_APP_URL,
   guestPhone: normalizePhone(localStorage.getItem(STORAGE.guestPhone) || ''),
   guestSessionId: getInitialGuestSessionId(),
@@ -572,10 +572,21 @@ async function updateStatus(orderId, status) {
     state.orders.set(result.order.orderId, result.order);
     renderOrders();
     syncKitchen({ full: false });
-    toast(`Pedido #${result.order.folio} actualizado`);
+    if (status === 'LISTO' || status === 'CANCELADO') {
+      toast(twilioToastMessage(result.twilio, result.order.folio));
+    } else {
+      toast(`Pedido #${result.order.folio} actualizado`);
+    }
   } catch (err) {
     toast(err.message || 'Error al actualizar');
   }
+}
+
+function twilioToastMessage(twilio, folio) {
+  if (twilio && twilio.ok) return `Pedido #${folio} actualizado y WhatsApp enviado`;
+  if (twilio && twilio.skipped) return `Pedido #${folio} actualizado. WhatsApp omitido: ${twilio.reason || 'revisa CONFIG'}`;
+  if (twilio && twilio.error) return `Pedido #${folio} actualizado. Error Twilio: ${String(twilio.error).slice(0, 90)}`;
+  return `Pedido #${folio} actualizado. Revisa EVENTOS_LOG para Twilio`;
 }
 
 async function updateAvailability(productId, available) {
@@ -639,6 +650,7 @@ async function syncGuestStatuses() {
     const data = await apiGet('guestOrders', {
       guestSessionId: state.guestSessionId,
       guestPhone,
+      orderId: state.linkedOrderId || '',
       clientRequestIds: ids.join(',')
     });
     if (!data.ok || !Array.isArray(data.orders)) return;
