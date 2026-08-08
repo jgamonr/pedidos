@@ -327,7 +327,7 @@ function renderOrders() {
     .filter(order => !state.statusFilter || order.status === state.statusFilter)
     .filter(order => {
       if (!query) return true;
-      return [order.folio, order.guestName, order.location, order.status].join(' ').toLowerCase().includes(query);
+      return [order.folio, order.guestName, order.location, order.status, order.guestPhone].join(' ').toLowerCase().includes(query);
     })
     .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
@@ -342,6 +342,9 @@ function renderOrders() {
   });
   els.ordersList.querySelectorAll('[data-whatsapp-status]').forEach(button => {
     button.addEventListener('click', () => openWhatsAppNotice(button.dataset.orderId, button.dataset.whatsappStatus));
+  });
+  els.ordersList.querySelectorAll('[data-save-phone]').forEach(button => {
+    button.addEventListener('click', () => updateOrderPhone(button.dataset.orderId));
   });
 }
 
@@ -371,6 +374,13 @@ function orderCard(order) {
         `).join('')}
       </div>
       ${order.notes ? `<p><strong>Notas:</strong> ${escapeHtml(order.notes)}</p>` : ''}
+      <div class="phone-editor">
+        <label>
+          Tel&eacute;fono WhatsApp
+          <input type="tel" inputmode="tel" data-phone-input="${order.orderId}" value="${escapeHtml(order.guestPhone || '')}" placeholder="Ej. 664 123 4567">
+        </label>
+        <button type="button" data-save-phone="${order.orderId}">Guardar tel&eacute;fono</button>
+      </div>
       <div class="status-actions">
         ${nextStatuses.map(status => `
           <button class="status-button" type="button" data-status="${status}" data-next-status="${status}" data-order-id="${order.orderId}">
@@ -404,6 +414,22 @@ function openWhatsAppNotice(orderId, status) {
 
   const message = whatsappMessage(order, status);
   window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, '_blank', 'noopener');
+}
+
+async function updateOrderPhone(orderId) {
+  const input = els.ordersList.querySelector(`[data-phone-input="${CSS.escape(orderId)}"]`);
+  const phone = normalizePhone(input ? input.value : '');
+  if (phone.length < 7) return toast('Ingresa un telefono valido');
+
+  try {
+    const result = await apiPost({ action: 'updateGuestPhone', orderId, guestPhone: phone });
+    if (!result.ok) throw new Error(result.error || 'No se pudo guardar el telefono');
+    state.orders.set(result.order.orderId, result.order);
+    renderOrders();
+    toast(`Telefono guardado para pedido #${result.order.folio}`);
+  } catch (err) {
+    toast(err.message || 'Error al guardar telefono');
+  }
 }
 
 function whatsappPhone(value) {

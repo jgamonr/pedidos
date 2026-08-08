@@ -1055,6 +1055,33 @@ textarea {
   gap: 8px;
 }
 
+.phone-editor {
+  display: grid;
+  grid-template-columns: minmax(180px, 1fr) auto;
+  gap: 8px;
+  align-items: end;
+  margin: 10px 0;
+  padding: 10px;
+  border: 1px solid #dbeafe;
+  border-radius: 8px;
+  background: #eff6ff;
+}
+
+.phone-editor label {
+  margin: 0;
+}
+
+.phone-editor input {
+  background: #fff;
+}
+
+.phone-editor button {
+  background: #0f766e;
+  color: #fff;
+  border-color: #0f766e;
+  font-weight: 900;
+}
+
 .status-button {
   background: #fff;
   border-color: var(--line);
