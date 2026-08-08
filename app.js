@@ -19,16 +19,20 @@ const STORAGE = {
   ingredients: 'fiesta_ingredients',
   history: 'fiesta_history',
   guestSessionId: 'fiesta_guest_session_id',
+  guestPhone: 'fiesta_guest_phone',
+  guestName: 'fiesta_guest_name',
+  guestLocation: 'fiesta_guest_location',
   pin: 'fiesta_kitchen_pin'
 };
 
 const state = {
   apiUrl: localStorage.getItem(STORAGE.apiUrl) || window.FIESTA_API_URL || '',
-  guestSessionId: getOrCreateGuestSessionId(),
+  guestPhone: normalizePhone(localStorage.getItem(STORAGE.guestPhone) || ''),
+  guestSessionId: getInitialGuestSessionId(),
   products: DEFAULT_PRODUCTS,
   cart: readObject(STORAGE.cart),
   ingredients: readObject(STORAGE.ingredients),
-  history: readArray(STORAGE.history).filter(order => order.guestSessionId === localStorage.getItem(STORAGE.guestSessionId)),
+  history: filterGuestHistory(readArray(STORAGE.history), localStorage.getItem(STORAGE.guestPhone), localStorage.getItem(STORAGE.guestSessionId)),
   kitchenPin: sessionStorage.getItem(STORAGE.pin) || '',
   orders: new Map(),
   lastOrdersSync: '',
@@ -45,6 +49,7 @@ const els = {};
 document.addEventListener('DOMContentLoaded', () => {
   bindElements();
   bindEvents();
+  hydrateGuestProfile();
   registerServiceWorker();
   renderAll();
   loadProducts();
@@ -57,7 +62,7 @@ document.addEventListener('DOMContentLoaded', () => {
 function bindElements() {
   [
     'connectionText', 'settingsButton', 'menuList', 'cartCount', 'cartItems', 'clearCartButton',
-    'orderForm', 'guestName', 'guestLocation', 'guestNotes', 'submitOrderButton', 'guestHistory',
+    'orderForm', 'guestPhone', 'guestName', 'guestLocation', 'guestNotes', 'submitOrderButton', 'guestHistory',
     'pinGate', 'pinForm', 'kitchenPin', 'kitchenDashboard', 'summaryGrid', 'statusFilter',
     'kitchenSearch', 'lastSyncText', 'refreshKitchenButton', 'ordersList', 'availabilityList',
     'settingsDialog', 'apiUrlInput', 'saveSettingsButton', 'quickOrderButton', 'statusDialog',
@@ -92,6 +97,9 @@ function bindEvents() {
 
   if (els.quickOrderButton) els.quickOrderButton.addEventListener('click', quickOrder);
   if (els.orderForm) els.orderForm.addEventListener('submit', submitOrder);
+  if (els.guestPhone) els.guestPhone.addEventListener('change', saveGuestProfile);
+  if (els.guestName) els.guestName.addEventListener('change', saveGuestProfile);
+  if (els.guestLocation) els.guestLocation.addEventListener('change', saveGuestProfile);
 
   if (els.pinForm) els.pinForm.addEventListener('submit', event => {
     event.preventDefault();
@@ -215,12 +223,12 @@ function productCard(product) {
           <span class="pill">${product.disponible ? 'Disponible' : 'Agotado'}</span>
         </div>
         ${ingredients.length ? `
-          <div class="ingredient-picker ${qty ? '' : 'muted-picker'}">
+          <div class="ingredient-picker">
             <strong>Ingredientes (puedes quitar los que no quieras)</strong>
             <div class="ingredient-options">
               ${ingredients.map(ingredient => `
                 <label class="ingredient-chip">
-                  <input type="checkbox" data-ingredient-product="${product.id}" value="${escapeHtml(ingredient)}" ${selected.includes(ingredient) ? 'checked' : ''} ${qty ? '' : 'disabled'}>
+                  <input type="checkbox" data-ingredient-product="${product.id}" value="${escapeHtml(ingredient)}" ${selected.includes(ingredient) ? 'checked' : ''}>
                   <span>${escapeHtml(ingredient)}</span>
                 </label>
               `).join('')}
@@ -394,7 +402,6 @@ function changeCart(productId, delta) {
   const next = Math.max(0, Math.min(20, (state.cart[productId] || 0) + delta));
   if (next === 0) {
     delete state.cart[productId];
-    delete state.ingredients[productId];
   } else {
     state.cart[productId] = next;
     ensureDefaultIngredients(productId);
@@ -423,12 +430,16 @@ async function submitOrder(event) {
 
   const lines = cartLines();
   if (!lines.length) return toast('Agrega al menos un producto');
+  const phone = normalizePhone(els.guestPhone ? els.guestPhone.value : state.guestPhone);
+  if (phone.length < 7) return toast('Ingresa tu telefono para guardar tus pedidos');
+  saveGuestProfile();
 
   const clientRequestId = crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`;
   const payload = {
     action: 'createOrder',
     clientRequestId,
     guestSessionId: state.guestSessionId,
+    guestPhone: state.guestPhone,
     guestName: els.guestName.value.trim(),
     location: els.guestLocation.value.trim(),
     notes: els.guestNotes.value.trim(),
@@ -443,7 +454,8 @@ async function submitOrder(event) {
     if (!result.ok) throw new Error(result.error || 'No se pudo enviar');
 
     const guestOrder = Object.assign({}, result.order, {
-      guestSessionId: result.order.guestSessionId || state.guestSessionId
+      guestSessionId: result.order.guestSessionId || state.guestSessionId,
+      guestPhone: result.order.guestPhone || state.guestPhone
     });
     state.history.unshift(guestOrder);
     state.history = state.history.slice(0, 10);
@@ -451,7 +463,8 @@ async function submitOrder(event) {
     state.cart = {};
     state.ingredients = {};
     persistCart();
-    els.orderForm.reset();
+    if (els.guestNotes) els.guestNotes.value = '';
+    hydrateGuestProfile();
     renderMenu();
     renderCart();
     renderHistory();
@@ -558,22 +571,35 @@ function startGuestStatusPolling() {
 }
 
 async function syncGuestStatuses() {
-  if (!state.apiUrl || !state.history.length) return;
+  if (!state.apiUrl) return;
 
   const ids = state.history
     .map(order => order.clientRequestId)
     .filter(Boolean)
     .slice(0, 10);
-  if (!ids.length) return;
+  const guestPhone = normalizePhone(state.guestPhone || localStorage.getItem(STORAGE.guestPhone) || '');
+  if (!ids.length && !guestPhone) return;
 
   try {
-    const data = await apiGet('guestOrders', { guestSessionId: state.guestSessionId, clientRequestIds: ids.join(',') });
+    const data = await apiGet('guestOrders', {
+      guestSessionId: state.guestSessionId,
+      guestPhone,
+      clientRequestIds: ids.join(',')
+    });
     if (!data.ok || !Array.isArray(data.orders)) return;
 
     let changed = false;
     data.orders.forEach(remoteOrder => {
-      const index = state.history.findIndex(order => order.clientRequestId === remoteOrder.clientRequestId);
-      if (index === -1) return;
+      const index = state.history.findIndex(order => {
+        if (remoteOrder.orderId && order.orderId === remoteOrder.orderId) return true;
+        return remoteOrder.clientRequestId && order.clientRequestId === remoteOrder.clientRequestId;
+      });
+      if (index === -1) {
+        remoteOrder.attention = false;
+        state.history.unshift(remoteOrder);
+        changed = true;
+        return;
+      }
 
       const current = state.history[index];
       if (current.status && current.status !== remoteOrder.status) {
@@ -588,6 +614,7 @@ async function syncGuestStatuses() {
     });
 
     if (changed) {
+      state.history = filterGuestHistory(state.history, state.guestPhone, state.guestSessionId).slice(0, 20);
       localStorage.setItem(STORAGE.history, JSON.stringify(state.history));
       renderHistory();
     }
@@ -665,6 +692,30 @@ function persistCart() {
   localStorage.setItem(STORAGE.ingredients, JSON.stringify(state.ingredients));
 }
 
+function hydrateGuestProfile() {
+  if (els.guestPhone) els.guestPhone.value = state.guestPhone || '';
+  if (els.guestName) els.guestName.value = localStorage.getItem(STORAGE.guestName) || '';
+  if (els.guestLocation) els.guestLocation.value = localStorage.getItem(STORAGE.guestLocation) || '';
+}
+
+function saveGuestProfile() {
+  const previousPhone = state.guestPhone;
+  const phone = normalizePhone(els.guestPhone ? els.guestPhone.value : state.guestPhone);
+  if (phone) {
+    state.guestPhone = phone;
+    state.guestSessionId = sessionIdForPhone(phone);
+    localStorage.setItem(STORAGE.guestPhone, phone);
+    localStorage.setItem(STORAGE.guestSessionId, state.guestSessionId);
+    if (phone !== previousPhone) {
+      state.history = filterGuestHistory(readArray(STORAGE.history), phone, state.guestSessionId);
+      localStorage.setItem(STORAGE.history, JSON.stringify(state.history));
+      if (els.guestHistory) renderHistory();
+    }
+  }
+  if (els.guestName) localStorage.setItem(STORAGE.guestName, els.guestName.value.trim());
+  if (els.guestLocation) localStorage.setItem(STORAGE.guestLocation, els.guestLocation.value.trim());
+}
+
 function ensureDefaultIngredients(productId) {
   const options = getIngredientOptions(productId);
   if (!options.length || Array.isArray(state.ingredients[productId])) return;
@@ -721,6 +772,33 @@ function readJson(key, fallback) {
   } catch (err) {
     return fallback;
   }
+}
+
+function normalizePhone(value) {
+  return String(value || '').replace(/\D/g, '').slice(0, 15);
+}
+
+function sessionIdForPhone(phone) {
+  return `phone-${normalizePhone(phone)}`;
+}
+
+function getInitialGuestSessionId() {
+  const phone = normalizePhone(localStorage.getItem(STORAGE.guestPhone) || '');
+  if (phone) {
+    const id = sessionIdForPhone(phone);
+    localStorage.setItem(STORAGE.guestSessionId, id);
+    return id;
+  }
+  return getOrCreateGuestSessionId();
+}
+
+function filterGuestHistory(history, phoneValue, sessionIdValue) {
+  const phone = normalizePhone(phoneValue || '');
+  const sessionId = String(sessionIdValue || '').trim();
+  return history.filter(order => {
+    if (phone && normalizePhone(order.guestPhone) === phone) return true;
+    return sessionId && order.guestSessionId === sessionId;
+  });
 }
 
 function getOrCreateGuestSessionId() {

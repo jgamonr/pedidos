@@ -1,4 +1,4 @@
-const CACHE_NAME = 'fiesta-pedidos-v15';
+const CACHE_NAME = 'fiesta-pedidos-v16';
 const APP_SHELL = [
   './',
   './index.html',
