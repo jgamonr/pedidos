@@ -32,6 +32,7 @@ const state = {
   guestPhone: normalizePhone(localStorage.getItem(STORAGE.guestPhone) || ''),
   guestSessionId: getInitialGuestSessionId(),
   products: DEFAULT_PRODUCTS,
+  appOpen: true,
   cart: readObject(STORAGE.cart),
   ingredients: readObject(STORAGE.ingredients),
   history: filterGuestHistory(readArray(STORAGE.history), localStorage.getItem(STORAGE.guestPhone), localStorage.getItem(STORAGE.guestSessionId)),
@@ -44,6 +45,7 @@ const state = {
   kitchenTimer: null,
   productTimer: null,
   guestStatusTimer: null,
+  appMessageTimer: null,
   linkedOrderId: '',
   forceStatusModal: false,
   linkedStatusModalShown: new Set()
@@ -71,8 +73,10 @@ function bindElements() {
     'orderForm', 'guestPhone', 'guestName', 'guestLocation', 'guestNotes', 'submitOrderButton', 'guestHistory',
     'pinGate', 'pinForm', 'kitchenPin', 'kitchenDashboard', 'summaryGrid', 'statusFilter',
     'kitchenSearch', 'lastSyncText', 'refreshKitchenButton', 'ordersList', 'availabilityList',
+    'kitchenModeText', 'toggleKitchenButton',
     'settingsDialog', 'apiUrlInput', 'saveSettingsButton', 'quickOrderButton', 'statusDialog',
-    'statusModalBadge', 'statusModalTitle', 'statusModalMessage', 'statusModalClose', 'toast'
+    'statusModalBadge', 'statusModalTitle', 'statusModalMessage', 'statusModalClose',
+    'appMessageDialog', 'appMessageIcon', 'appMessageBadge', 'appMessageTitle', 'appMessageText', 'toast'
   ].forEach(id => { els[id] = document.getElementById(id); });
 }
 
@@ -128,6 +132,7 @@ function bindEvents() {
   });
 
   if (els.refreshKitchenButton) els.refreshKitchenButton.addEventListener('click', () => syncKitchen({ full: true }));
+  if (els.toggleKitchenButton) els.toggleKitchenButton.addEventListener('click', () => updateAppOpen(!state.appOpen));
   if (els.statusDialog) els.statusDialog.addEventListener('close', () => {
     const orderId = els.statusDialog.dataset.orderId;
     if (!orderId) return;
@@ -169,6 +174,7 @@ function renderAll() {
   if (els.availabilityList) renderAvailability();
   if (els.summaryGrid) renderSummary();
   if (els.ordersList) renderOrders();
+  renderKitchenMode();
 }
 
 function renderConnection() {
@@ -214,19 +220,20 @@ function renderMenu() {
 
 function productCard(product) {
   const qty = state.cart[product.id] || 0;
-  const disabled = !product.disponible ? 'disabled' : '';
+  const available = isProductAvailable(product);
+  const disabled = !state.appOpen || !canAddProduct(product) ? 'disabled' : '';
   const ingredients = getIngredientOptions(product.id);
   const selected = getSelectedIngredients(product.id);
   const isFood = product.categoria === 'Alimentos';
   return `
-    <article class="product-card ${isFood ? 'food-card' : 'drink-card'} ${product.disponible ? '' : 'unavailable'}" data-product-category="${escapeHtml(product.categoria)}">
+    <article class="product-card ${isFood ? 'food-card' : 'drink-card'} ${available && state.appOpen ? '' : 'unavailable'}" data-product-category="${escapeHtml(product.categoria)}">
       <img class="product-photo" src="${productPhoto(product)}" alt="" loading="lazy">
       <div class="product-info">
         <h3>${escapeHtml(product.nombre)}</h3>
         <p>${escapeHtml(product.descripcion || '')}</p>
         <div class="product-meta">
           <span class="pill"><span class="dot"></span>${product.categoria === 'Alimentos' ? 'Alimento' : 'Bebida'}</span>
-          <span class="pill">${product.disponible ? 'Disponible' : 'Agotado'}</span>
+          <span class="pill">${state.appOpen ? (available ? stockLabel(product) : 'Agotado') : 'Cocina cerrada'}</span>
         </div>
         ${ingredients.length ? `
           <div class="ingredient-picker">
@@ -278,7 +285,7 @@ function renderCart() {
       <div class="qty-control">
         <button type="button" data-cart-remove="${line.product.id}">−</button>
         <span>${line.quantity}</span>
-        <button type="button" data-cart-add="${line.product.id}" ${line.product.disponible ? '' : 'disabled'}>+</button>
+        <button type="button" data-cart-add="${line.product.id}" ${canAddProduct(line.product) ? '' : 'disabled'}>+</button>
       </div>
     </div>
   `).join('');
@@ -329,7 +336,11 @@ function renderOrders() {
       if (!query) return true;
       return [order.folio, order.guestName, order.location, order.status, order.guestPhone].join(' ').toLowerCase().includes(query);
     })
-    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    .sort((a, b) => {
+      const priority = Number(b.status === 'NUEVO') - Number(a.status === 'NUEVO');
+      if (priority) return priority;
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    });
 
   if (!orders.length) {
     els.ordersList.innerHTML = '<div class="history-card">No hay pedidos con este filtro.</div>';
@@ -351,8 +362,9 @@ function renderOrders() {
 function orderCard(order) {
   const nextStatuses = STATUS_FLOW.filter(status => status !== order.status);
   const hasPhone = normalizePhone(order.guestPhone).length >= 7;
+  const needsPrep = order.status === 'NUEVO';
   return `
-    <article class="order-card">
+    <article class="order-card ${needsPrep ? 'needs-prep' : ''}">
       <header>
         <div>
           <div class="folio">#${escapeHtml(order.folio || '')}</div>
@@ -421,14 +433,15 @@ async function updateOrderPhone(orderId) {
   const phone = normalizePhone(input ? input.value : '');
   if (phone.length < 7) return toast('Ingresa un telefono valido');
 
+  showAppModal('Guardando telefono', 'Conectando con el sistema...', 'PROCESO', { busy: true });
   try {
     const result = await apiPost({ action: 'updateGuestPhone', orderId, guestPhone: phone });
     if (!result.ok) throw new Error(result.error || 'No se pudo guardar el telefono');
     state.orders.set(result.order.orderId, result.order);
     renderOrders();
-    toast(`Telefono guardado para pedido #${result.order.folio}`);
+    showAppModal('Telefono guardado', `El telefono del pedido #${result.order.folio} quedo guardado correctamente.`, 'OK');
   } catch (err) {
-    toast(err.message || 'Error al guardar telefono');
+    showAppModal('No se guardo el telefono', err.message || 'Error al guardar telefono', 'ERROR');
   }
 }
 
@@ -462,7 +475,11 @@ function renderAvailability() {
     <div class="availability-row">
       <div>
         <strong>${escapeHtml(product.nombre)}</strong>
-        <p>${escapeHtml(product.categoria)}</p>
+        <p>${escapeHtml(product.categoria)} · Stock ${Number(product.stock || 0)}</p>
+      </div>
+      <div class="stock-editor">
+        <input type="number" min="0" max="9999" step="1" data-stock-input="${product.id}" value="${Number(product.stock || 0)}" aria-label="Stock de ${escapeHtml(product.nombre)}">
+        <button type="button" data-save-stock="${product.id}">Guardar</button>
       </div>
       <label class="switch" aria-label="Disponibilidad de ${escapeHtml(product.nombre)}">
         <input type="checkbox" data-availability="${product.id}" ${product.disponible ? 'checked' : ''}>
@@ -474,13 +491,19 @@ function renderAvailability() {
   els.availabilityList.querySelectorAll('[data-availability]').forEach(input => {
     input.addEventListener('change', () => updateAvailability(input.dataset.availability, input.checked));
   });
+  els.availabilityList.querySelectorAll('[data-save-stock]').forEach(button => {
+    button.addEventListener('click', () => updateStock(button.dataset.saveStock));
+  });
 }
 
 function changeCart(productId, delta) {
   const product = state.products.find(item => item.id === productId);
-  if (!product || (!product.disponible && delta > 0)) return;
+  if (!product) return;
+  if (delta > 0 && !state.appOpen) return toast('La cocina esta cerrada por el momento');
+  if (delta > 0 && !canAddProduct(product)) return toast('Producto agotado');
 
-  const next = Math.max(0, Math.min(20, (state.cart[productId] || 0) + delta));
+  const limit = product.stock === undefined || product.stock === null || product.stock === '' ? 20 : Math.min(20, Number(product.stock || 0));
+  const next = Math.max(0, Math.min(limit, (state.cart[productId] || 0) + delta));
   if (next === 0) {
     delete state.cart[productId];
   } else {
@@ -494,8 +517,8 @@ function changeCart(productId, delta) {
 }
 
 function quickOrder() {
-  const burger = state.products.find(product => product.id === 'hamburguesa' && product.disponible);
-  const water = state.products.find(product => product.id === 'agua-ponche' && product.disponible);
+  const burger = state.products.find(product => product.id === 'hamburguesa' && canAddProduct(product));
+  const water = state.products.find(product => product.id === 'agua-ponche' && canAddProduct(product));
   if (burger) state.cart[burger.id] = (state.cart[burger.id] || 0) + 1;
   if (water) state.cart[water.id] = (state.cart[water.id] || 0) + 1;
   if (burger) ensureDefaultIngredients(burger.id);
@@ -508,9 +531,12 @@ function quickOrder() {
 async function submitOrder(event) {
   event.preventDefault();
   if (!state.apiUrl) return openSettingsWithMessage('Configura la URL de Apps Script antes de enviar pedidos.');
+  if (!state.appOpen) return toast('La cocina esta cerrada por el momento');
 
   const lines = cartLines();
   if (!lines.length) return toast('Agrega al menos un producto');
+  const unavailable = lines.find(line => !hasEnoughStock(line.product, line.quantity));
+  if (unavailable) return toast(`${unavailable.product.nombre} no tiene stock suficiente`);
   const phone = normalizePhone(els.guestPhone ? els.guestPhone.value : state.guestPhone);
   if (phone.length < 7) return toast('Ingresa tu telefono para guardar tus pedidos');
   saveGuestProfile();
@@ -529,6 +555,7 @@ async function submitOrder(event) {
 
   els.submitOrderButton.disabled = true;
   els.submitOrderButton.textContent = 'Enviando...';
+  showAppModal('Enviando pedido', 'Guardando tu pedido...', 'PROCESO', { busy: true });
 
   try {
     const result = await apiPost(payload);
@@ -551,9 +578,9 @@ async function submitOrder(event) {
     renderHistory();
     requestGuestNotifications();
     startGuestStatusPolling();
-    toast(`Pedido #${result.order.folio} enviado`);
+    showAppModal('Pedido enviado', `Tu pedido #${result.order.folio} fue guardado correctamente.`, 'OK');
   } catch (err) {
-    toast(err.message || 'Error al enviar pedido');
+    showAppModal('No se pudo enviar el pedido', err.message || 'Error al enviar pedido', 'ERROR');
   } finally {
     els.submitOrderButton.disabled = false;
     els.submitOrderButton.textContent = 'Enviar pedido';
@@ -573,6 +600,7 @@ async function syncKitchen({ full }) {
   if (!state.apiUrl) return openSettingsWithMessage('Configura la URL de Apps Script para usar cocina.');
   if (!els.ordersList) return;
 
+  if (full) showAppModal('Sincronizando cocina', 'Consultando pedidos...', 'PROCESO', { busy: true });
   try {
     const since = full ? '' : state.lastOrdersSync;
     const data = await apiGet('orders', { updatedSince: since });
@@ -585,47 +613,78 @@ async function syncKitchen({ full }) {
     renderOrders();
 
     const summary = await apiGet('summary');
-    if (summary.ok) renderSummary(summary.summary);
+    if (summary.ok) {
+      state.appOpen = summary.appOpen !== false;
+      renderKitchenMode();
+      renderSummary(summary.summary);
+    }
+    if (full) showAppModal('Cocina sincronizada', 'Pedidos y resumen actualizados.', 'OK');
   } catch (err) {
-    toast(err.message || 'Error de sincronización');
+    if (full) showAppModal('No se pudo sincronizar cocina', err.message || 'Error de sincronizacion', 'ERROR');
+    else toast(err.message || 'Error de sincronizacion');
   }
 }
 
 async function updateStatus(orderId, status) {
+  showAppModal('Actualizando estado', 'Guardando el cambio...', 'PROCESO', { busy: true });
   try {
     const result = await apiPost({ action: 'updateStatus', orderId, status });
     if (!result.ok) throw new Error(result.error || 'No se pudo actualizar');
     state.orders.set(result.order.orderId, result.order);
     renderOrders();
     syncKitchen({ full: false });
-    if (status === 'LISTO' || status === 'CANCELADO') {
-      toast(twilioToastMessage(result.twilio, result.order.folio));
-    } else {
-      toast(`Pedido #${result.order.folio} actualizado`);
-    }
+    showAppModal('Estado actualizado', `El pedido #${result.order.folio} se actualizo a ${status}.`, 'OK');
   } catch (err) {
-    toast(err.message || 'Error al actualizar');
+    showAppModal('No se actualizo el pedido', err.message || 'Error al actualizar', 'ERROR');
   }
 }
 
-function twilioToastMessage(twilio, folio) {
-  if (twilio && twilio.ok) return `Pedido #${folio} actualizado y WhatsApp enviado`;
-  if (twilio && twilio.skipped) return `Pedido #${folio} actualizado. WhatsApp omitido: ${twilio.reason || 'revisa CONFIG'}`;
-  if (twilio && twilio.error) return `Pedido #${folio} actualizado. Error Twilio: ${String(twilio.error).slice(0, 90)}`;
-  return `Pedido #${folio} actualizado. Revisa EVENTOS_LOG para Twilio`;
-}
-
 async function updateAvailability(productId, available) {
+  showAppModal('Actualizando disponibilidad', 'Guardando el cambio...', 'PROCESO', { busy: true });
   try {
     const result = await apiPost({ action: 'updateAvailability', productId, available });
     if (!result.ok) throw new Error(result.error || 'No se pudo cambiar disponibilidad');
     state.products = result.products;
     renderMenu();
     renderAvailability();
-    toast('Disponibilidad actualizada');
+    renderCart();
+    showAppModal('Disponibilidad actualizada', 'El cambio se guardo y se reflejara en el menu.', 'OK');
   } catch (err) {
-    toast(err.message || 'Error al actualizar disponibilidad');
+    showAppModal('No se actualizo disponibilidad', err.message || 'Error al actualizar disponibilidad', 'ERROR');
     loadProducts();
+  }
+}
+
+async function updateStock(productId) {
+  const input = els.availabilityList.querySelector(`[data-stock-input="${CSS.escape(productId)}"]`);
+  const stock = Math.max(0, Math.min(9999, Number(input ? input.value : 0)));
+  showAppModal('Guardando stock', 'Actualizando existencias...', 'PROCESO', { busy: true });
+  try {
+    const result = await apiPost({ action: 'updateStock', productId, stock, markAvailable: stock > 0 });
+    if (!result.ok) throw new Error(result.error || 'No se pudo guardar stock');
+    state.products = result.products;
+    renderMenu();
+    renderAvailability();
+    renderCart();
+    showAppModal('Stock actualizado', 'El stock se guardo y ya controla el menu del invitado.', 'OK');
+  } catch (err) {
+    showAppModal('No se guardo el stock', err.message || 'Error al guardar stock', 'ERROR');
+    loadProducts();
+  }
+}
+
+async function updateAppOpen(open) {
+  showAppModal(open ? 'Abriendo cocina' : 'Cerrando cocina', 'Guardando configuracion...', 'PROCESO', { busy: true });
+  try {
+    const result = await apiPost({ action: 'updateAppOpen', open });
+    if (!result.ok) throw new Error(result.error || 'No se pudo cambiar cocina');
+    state.appOpen = Boolean(result.appOpen);
+    renderKitchenMode();
+    renderMenu();
+    renderCart();
+    showAppModal(state.appOpen ? 'Cocina abierta' : 'Cocina cerrada', state.appOpen ? 'Los invitados ya pueden enviar pedidos.' : 'Los invitados no podran enviar pedidos nuevos.', 'OK');
+  } catch (err) {
+    showAppModal('No se cambio el estado de cocina', err.message || 'Error al cambiar cocina', 'ERROR');
   }
 }
 
@@ -634,6 +693,7 @@ async function loadProducts() {
   if (!state.apiUrl) {
     state.products = DEFAULT_PRODUCTS;
     renderMenu();
+    renderKitchenMode();
     if (els.availabilityList) renderAvailability();
     return;
   }
@@ -642,8 +702,11 @@ async function loadProducts() {
     const data = await apiGet('products');
     if (!data.ok) throw new Error(data.error || 'No se pudo cargar el menú');
     state.products = Array.isArray(data.products) && data.products.length ? data.products : DEFAULT_PRODUCTS;
+    state.appOpen = data.appOpen !== false;
     renderConnection();
     renderMenu();
+    renderCart();
+    renderKitchenMode();
     if (els.availabilityList) renderAvailability();
   } catch (err) {
     els.connectionText.textContent = 'Usando menú local';
@@ -654,6 +717,36 @@ async function loadProducts() {
 function startProductPolling() {
   if (state.productTimer) clearInterval(state.productTimer);
   state.productTimer = setInterval(loadProducts, 20000);
+}
+
+function renderKitchenMode() {
+  if (!els.kitchenModeText || !els.toggleKitchenButton) return;
+  els.kitchenModeText.textContent = state.appOpen ? 'Cocina abierta' : 'Cocina cerrada';
+  els.toggleKitchenButton.textContent = state.appOpen ? 'Cerrar cocina' : 'Abrir cocina';
+  els.toggleKitchenButton.classList.toggle('danger-soft', state.appOpen);
+}
+
+function isProductAvailable(product) {
+  if (!product || !product.disponible) return false;
+  if (product.stock === undefined || product.stock === null || product.stock === '') return true;
+  return Number(product.stock || 0) > 0;
+}
+
+function canAddProduct(product) {
+  if (!state.appOpen || !isProductAvailable(product)) return false;
+  if (product.stock === undefined || product.stock === null || product.stock === '') return true;
+  return (state.cart[product.id] || 0) < Number(product.stock || 0);
+}
+
+function stockLabel(product) {
+  if (product.stock === undefined || product.stock === null || product.stock === '') return 'Disponible';
+  return `Stock ${Number(product.stock || 0)}`;
+}
+
+function hasEnoughStock(product, quantity) {
+  if (!isProductAvailable(product)) return false;
+  if (product.stock === undefined || product.stock === null || product.stock === '') return true;
+  return Number(product.stock || 0) >= Number(quantity || 0);
 }
 
 function startGuestStatusPolling() {
@@ -735,7 +828,7 @@ function shouldShowLinkedStatusModal(order) {
 function notifyGuestStatus(order) {
   const message = `Pedido #${order.folio}: ${statusMessage(order.status)}`;
   if (order.status === 'LISTO' || order.status === 'CANCELADO') {
-    showStatusModal(order);
+    if (isGuestExperienceActive()) showStatusModal(order);
   } else {
     toast(message, 6200);
   }
@@ -750,6 +843,12 @@ function notifyGuestStatus(order) {
   }
 }
 
+function isGuestExperienceActive() {
+  if (document.body.classList.contains('guest-only')) return true;
+  const guestView = document.getElementById('guestView');
+  return Boolean(guestView && guestView.classList.contains('active'));
+}
+
 function showStatusModal(order) {
   els.statusDialog.dataset.orderId = order.orderId || '';
   els.statusModalBadge.textContent = order.status || 'NUEVO';
@@ -761,6 +860,29 @@ function showStatusModal(order) {
 
   if (els.statusDialog.open) els.statusDialog.close();
   els.statusDialog.showModal();
+}
+
+function showAppModal(title, message, badge = 'AVISO', options = {}) {
+  if (!els.appMessageDialog) return toast(message || title);
+  if (state.appMessageTimer) {
+    clearTimeout(state.appMessageTimer);
+    state.appMessageTimer = null;
+  }
+  const busy = Boolean(options.busy);
+  els.appMessageBadge.textContent = badge;
+  els.appMessageBadge.className = `status-badge ${badge === 'ERROR' ? 'status-CANCELADO' : busy ? 'status-PREPARANDO' : 'status-LISTO'}`;
+  els.appMessageIcon.textContent = badge === 'ERROR' ? '!' : busy ? '...' : 'OK';
+  els.appMessageTitle.textContent = title || 'Aviso';
+  els.appMessageText.textContent = message || '';
+  if (els.appMessageDialog.open) els.appMessageDialog.close();
+  els.appMessageDialog.showModal();
+  const autoClose = options.autoClose === undefined ? (busy ? 0 : 1800) : Number(options.autoClose || 0);
+  if (autoClose > 0) {
+    state.appMessageTimer = setTimeout(() => {
+      if (els.appMessageDialog && els.appMessageDialog.open) els.appMessageDialog.close();
+      state.appMessageTimer = null;
+    }, autoClose);
+  }
 }
 
 function requestGuestNotifications() {

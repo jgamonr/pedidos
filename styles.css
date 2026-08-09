@@ -981,6 +981,28 @@ textarea {
   font-size: 0.82rem;
 }
 
+.kitchen-mode-panel {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+  margin: 12px 0;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #f8fafc;
+}
+
+.kitchen-mode-panel strong {
+  display: block;
+  font-size: 1rem;
+}
+
+.kitchen-mode-panel span {
+  color: var(--muted);
+  font-weight: 700;
+}
+
 .kitchen-controls {
   display: grid;
   grid-template-columns: 1fr 260px;
@@ -1020,12 +1042,42 @@ textarea {
   padding: 12px;
 }
 
+.order-card.needs-prep {
+  border-color: #fb923c;
+  background: #fff7ed;
+  box-shadow: 0 12px 28px rgba(249, 115, 22, 0.16);
+  animation: kitchenAttention 1.4s ease-in-out infinite;
+}
+
+.order-card.needs-prep .folio::after {
+  content: "Nuevo pedido";
+  display: inline-flex;
+  margin-left: 10px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: #ffedd5;
+  color: #c2410c;
+  font-size: 0.72rem;
+  font-weight: 900;
+  vertical-align: middle;
+}
+
 .order-card header {
   display: flex;
   justify-content: space-between;
   align-items: start;
   gap: 12px;
   margin-bottom: 10px;
+}
+
+@keyframes kitchenAttention {
+  0%,
+  100% {
+    box-shadow: 0 12px 28px rgba(249, 115, 22, 0.14);
+  }
+  50% {
+    box-shadow: 0 16px 36px rgba(249, 115, 22, 0.28);
+  }
 }
 
 .folio {
@@ -1146,12 +1198,30 @@ textarea {
 
 .availability-row {
   display: grid;
-  grid-template-columns: 1fr auto;
+  grid-template-columns: 1fr auto auto;
   align-items: center;
   gap: 10px;
   border: 1px solid var(--line);
   border-radius: 6px;
   padding: 10px;
+}
+
+.stock-editor {
+  display: grid;
+  grid-template-columns: 84px auto;
+  gap: 6px;
+  align-items: center;
+}
+
+.stock-editor input {
+  min-height: 38px;
+  padding: 8px;
+}
+
+.stock-editor button {
+  min-height: 38px;
+  padding: 8px 10px;
+  font-weight: 900;
 }
 
 .switch {
@@ -1294,6 +1364,15 @@ dialog::backdrop {
 
   .summary-grid {
     grid-template-columns: repeat(2, 1fr);
+  }
+
+  .kitchen-mode-panel,
+  .availability-row {
+    grid-template-columns: 1fr;
+  }
+
+  .stock-editor {
+    grid-template-columns: 1fr auto;
   }
 }
 
