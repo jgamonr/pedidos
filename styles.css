@@ -126,8 +126,10 @@ button {
 
 .brand-icon {
   display: block;
-  width: 42px;
-  height: 56px;
+  width: 30px;
+  height: 40px;
+  max-width: 30px;
+  max-height: 40px;
   flex: 0 0 auto;
   border-radius: 8px;
   object-fit: cover;
@@ -192,13 +194,15 @@ h3 {
 .motivo-menu-heading {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
   min-width: 0;
 }
 
 .motivo-symbol {
-  width: 48px;
-  height: 64px;
+  width: 30px;
+  height: 40px;
+  max-width: 30px;
+  max-height: 40px;
   flex: 0 0 auto;
   border-radius: 8px;
   object-fit: cover;
@@ -1592,13 +1596,17 @@ dialog::backdrop {
   }
 
   .brand-icon {
-    width: 36px;
-    height: 48px;
+    width: 26px;
+    height: 35px;
+    max-width: 26px;
+    max-height: 35px;
   }
 
   .motivo-symbol {
-    width: 42px;
-    height: 56px;
+    width: 26px;
+    height: 35px;
+    max-width: 26px;
+    max-height: 35px;
   }
 
   .menu-list {

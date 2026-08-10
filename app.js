@@ -926,6 +926,7 @@ function persistCart() {
 function applyGuestLinkParams() {
   const params = new URLSearchParams(window.location.search);
   const phone = normalizePhone(params.get('tel') || params.get('telefono') || params.get('phone') || '');
+  const location = String(params.get('mesa') || params.get('caja') || params.get('ubicacion') || params.get('location') || '').trim();
   const orderId = String(params.get('pedido') || params.get('orderId') || '').trim();
   if (phone) {
     state.guestPhone = phone;
@@ -934,6 +935,7 @@ function applyGuestLinkParams() {
     localStorage.setItem(STORAGE.guestSessionId, state.guestSessionId);
     state.history = filterGuestHistory(readArray(STORAGE.history), phone, state.guestSessionId);
   }
+  if (location) localStorage.setItem(STORAGE.guestLocation, location);
   if (orderId) state.linkedOrderId = orderId;
   state.forceStatusModal = params.get('modal') === '1';
 }
