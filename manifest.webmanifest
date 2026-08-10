@@ -1,19 +1,18 @@
 {
-  "name": "Fiesta Pedidos",
-  "short_name": "Pedidos",
-  "description": "Pedidos de alimentos y bebidas para fiesta privada",
+  "name": "MOTIVO Alimentos & Eventos",
+  "short_name": "MOTIVO",
+  "description": "Pedidos privados para eventos atendidos por MOTIVO Alimentos & Eventos",
   "start_url": "./index.html",
   "display": "standalone",
-  "background_color": "#f8fafc",
-  "theme_color": "#0f766e",
+  "background_color": "#f6efe4",
+  "theme_color": "#b45d3c",
   "orientation": "portrait-primary",
   "icons": [
     {
-      "src": "./assets/icon.svg",
+      "src": "./assets/motivo-simbolo.svg",
       "sizes": "512x512",
       "type": "image/svg+xml",
       "purpose": "any maskable"
     }
   ]
 }
-

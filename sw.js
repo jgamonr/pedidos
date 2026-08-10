@@ -1,4 +1,4 @@
-const CACHE_NAME = 'fiesta-pedidos-v29';
+const CACHE_NAME = 'fiesta-pedidos-v32';
 const APP_SHELL = [
   './',
   './index.html',
@@ -7,6 +7,7 @@ const APP_SHELL = [
   './app.js',
   './manifest.webmanifest',
   './assets/icon.svg',
+  './assets/motivo-simbolo.svg',
   './assets/photos/event-table.jpg',
   './assets/photos/drink-station.jpg',
   './assets/photos/kitchen-counter.jpg',

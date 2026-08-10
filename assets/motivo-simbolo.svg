@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 240" role="img" aria-labelledby="title desc">
+  <title id="title">Simbolo MOTIVO</title>
+  <desc id="desc">Simbolo abstracto de MOTIVO basado en la referencia visual: dos formas negras, hoja oliva superior y punto terracota inferior.</desc>
+  <rect width="180" height="240" fill="#F4F1EB"/>
+  <path fill="#23262A" d="M42 66
+    C42 62 46 60 49 63
+    L75 91
+    C78 94 79 98 79 102
+    L79 181
+    C79 185 76 188 72 188
+    L49 188
+    C45 188 42 185 42 181
+    Z"/>
+  <path fill="#23262A" d="M138 66
+    C138 62 134 60 131 63
+    L105 91
+    C102 94 101 98 101 102
+    L101 181
+    C101 185 104 188 108 188
+    L131 188
+    C135 188 138 185 138 181
+    Z"/>
+  <path fill="#6B6843" d="M90 38
+    C103 25 120 24 128 32
+    C130 48 121 64 103 72
+    C96 75 89 75 83 73
+    C82 60 84 47 90 38
+    Z"/>
+  <circle fill="#C66343" cx="90" cy="205" r="11"/>
+</svg>
