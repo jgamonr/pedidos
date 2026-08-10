@@ -667,6 +667,13 @@ textarea {
   min-height: 44px;
 }
 
+input.locked-field {
+  border-color: #a7b87a;
+  background: #eef3df;
+  color: var(--olive-dark);
+  cursor: not-allowed;
+}
+
 textarea {
   resize: vertical;
 }

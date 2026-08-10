@@ -48,6 +48,8 @@ const state = {
   appMessageTimer: null,
   linkedOrderId: '',
   forceStatusModal: false,
+  locationLocked: false,
+  locationNoticePending: '',
   linkedStatusModalShown: new Set()
 };
 
@@ -935,7 +937,11 @@ function applyGuestLinkParams() {
     localStorage.setItem(STORAGE.guestSessionId, state.guestSessionId);
     state.history = filterGuestHistory(readArray(STORAGE.history), phone, state.guestSessionId);
   }
-  if (location) localStorage.setItem(STORAGE.guestLocation, location);
+  if (location) {
+    state.locationLocked = true;
+    state.locationNoticePending = location;
+    localStorage.setItem(STORAGE.guestLocation, location);
+  }
   if (orderId) state.linkedOrderId = orderId;
   state.forceStatusModal = params.get('modal') === '1';
 }
@@ -943,7 +949,21 @@ function applyGuestLinkParams() {
 function hydrateGuestProfile() {
   if (els.guestPhone) els.guestPhone.value = state.guestPhone || '';
   if (els.guestName) els.guestName.value = localStorage.getItem(STORAGE.guestName) || '';
-  if (els.guestLocation) els.guestLocation.value = localStorage.getItem(STORAGE.guestLocation) || '';
+  if (els.guestLocation) {
+    els.guestLocation.value = localStorage.getItem(STORAGE.guestLocation) || '';
+    els.guestLocation.readOnly = state.locationLocked;
+    els.guestLocation.classList.toggle('locked-field', state.locationLocked);
+    els.guestLocation.title = state.locationLocked ? 'Ubicacion asignada por QR' : '';
+  }
+  if (state.locationNoticePending) {
+    showAppModal(
+      'Ubicacion asignada',
+      `Tu pedido se hace desde esta ubicacion: ${state.locationNoticePending}.`,
+      'AVISO',
+      { autoClose: 4200 }
+    );
+    state.locationNoticePending = '';
+  }
 }
 
 function saveGuestProfile() {
